@@ -1,0 +1,1113 @@
+---
+title: "Multivariate mediator-response simulations v1"
+author: "Eli Sun"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MSGLasso); library(matrixcalc); library(dplyr); 
+library(mvtnorm); library(glmnet); library(MASS); library(doParallel)
+```
+# All combinations
+Simulation settings: $\{n,\ (p,p_0),\ \rho, \ k, \ q, \ l\}$
+
+## $q=25$
+### $n=100$
+(1)  100, (25,5), low,     5, 1, 25
+(2)  100, (25,5), medium,  5, 1, 25
+(3)  100, (25,5), high,    5, 1, 25
+(4)  100, (25,5), low,    10, 1, 25
+(5)  100, (25,5), medium, 10, 1, 25
+(6)  100, (25,5), high,   10, 1, 25
+
+(7)  100, (100,10), low,     5, 1, 25
+(8)  100, (100,10), medium,  5, 1, 25
+(9)  100, (100,10), high,    5, 1, 25
+(10) 100, (100,10), low,    10, 1, 25
+(11) 100, (100,10), medium, 10, 1, 25
+(12) 100, (100,10), high,   10, 1, 25
+
+### $n=250$
+(13) 250, (25,5), low,     5, 1, 25
+(14) 250, (25,5), medium,  5, 1, 25
+(15) 250, (25,5), high,    5, 1, 25
+(16) 250, (25,5), low,    10, 1, 25
+(17) 250, (25,5), medium, 10, 1, 25
+(18) 250, (25,5), high,   10, 1, 25
+
+(19) 250, (100,10), low,     5, 1, 25
+(20) 250, (100,10), medium,  5, 1, 25
+(21) 250, (100,10), high,    5, 1, 25
+(22) 250, (100,10), low,    10, 1, 25
+(23) 250, (100,10), medium, 10, 1, 25
+(24) 250, (100,10), high,   10, 1, 25 
+
+### $n=500$
+(25) 500, (25,5), low,     5, 1, 25
+(26) 500, (25,5), medium,  5, 1, 25
+(27) 500, (25,5), high,    5, 1, 25
+(28) 500, (25,5), low,    10, 1, 25
+(29) 500, (25,5), medium, 10, 1, 25
+(30) 500, (25,5), high,   10, 1, 25
+
+(31) 500, (100,10), low,     5, 1, 25
+(32) 500, (100,10), medium,  5, 1, 25 
+(33) 500, (100,10), high,    5, 1, 25
+(34) 500, (100,10), low,    10, 1, 25
+(35) 500, (100,10), medium, 10, 1, 25
+(36) 500, (100,10), high,   10, 1, 25 
+
+
+## $q=5$
+### $n=100$
+(37)  100, (25,5), low,     5, 1, 5 -- Done (155min)
+(38)  100, (25,5), medium,  5, 1, 5 -- Done (153min)
+(39)  100, (25,5), high,    5, 1, 5 -- Done (153min)
+(40)  100, (25,5), low,    10, 1, 5 -- Done (298min)
+(41)  100, (25,5), medium, 10, 1, 5 -- Done (305min)
+(42)  100, (25,5), high,   10, 1, 5 -- Done (300min)
+
+(43)  100, (100,10), low,     5, 1, 5 -- Done (1002min)
+(44)  100, (100,10), medium,  5, 1, 5 -- Done (1027min)
+(45)  100, (100,10), high,    5, 1, 5 -- Done (1023min)
+(46)  100, (100,10), low,    10, 1, 5 -- Done (2506min)
+(47)  100, (100,10), medium, 10, 1, 5
+(48)  100, (100,10), high,   10, 1, 5
+
+
+### $n=250$
+(49) 250, (25,5), low,     5, 1, 5 
+(50) 250, (25,5), medium,  5, 1, 5 
+(51) 250, (25,5), high,    5, 1, 5 
+(52) 250, (25,5), low,    10, 1, 5 
+(53) 250, (25,5), medium, 10, 1, 5 
+(54) 250, (25,5), high,   10, 1, 5 
+
+(55) 250, (100,10), low,     5, 1, 5 
+(56) 250, (100,10), medium,  5, 1, 5 
+(57) 250, (100,10), high,    5, 1, 5
+(58) 250, (100,10), low,    10, 1, 5
+(59) 250, (100,10), medium, 10, 1, 5
+(60) 250, (100,10), high,   10, 1, 5 
+
+
+### $n=500$
+(61) 500, (25,5), low,     5, 1, 5
+(62) 500, (25,5), medium,  5, 1, 5
+(63) 500, (25,5), high,    5, 1, 5
+(64) 500, (25,5), low,    10, 1, 5
+(65) 500, (25,5), medium, 10, 1, 5
+(66) 500, (25,5), high,   10, 1, 5
+
+(67) 500, (100,10), low,     5, 1, 5
+(68) 500, (100,10), medium,  5, 1, 5 
+(69) 500, (100,10), high,    5, 1, 5
+(70) 500, (100,10), low,    10, 1, 5
+(71) 500, (100,10), medium, 10, 1, 5
+(72) 500, (100,10), high,   10, 1, 5 
+
+
+# Combinations for paper
+Simulation settings: $\{n,\ (p,p_0),\ \rho, \ k, \ q, \ l\}$
+
+## To use for paper
+
+(37)  100, (25,5), low,     5, 1, 5 -- Done
+(38)  100, (25,5), medium,  5, 1, 5 -- Done 
+(39)  100, (25,5), high,    5, 1, 5 -- Done 
+
+(40)  100, (25,5), low,    10, 1, 5 -- Done 
+(41)  100, (25,5), medium, 10, 1, 5 -- Done 
+(42)  100, (25,5), high,   10, 1, 5 -- Done 
+
+(43c)  100, (100,5), low,     5, 1, 5 -- Done 
+(44c)  100, (100,5), medium,  5, 1, 5 -- Done 
+(45c)  100, (100,5), high,    5, 1, 5 -- Done 
+
+(49) 250, (25,5), low,     5, 1, 5 -- Done 
+(50) 250, (25,5), medium,  5, 1, 5 -- Done 
+(51) 250, (25,5), high,    5, 1, 5 -- Done 
+
+(43)  100, (100,10), low,     5, 1, 5 -- Done
+(44)  100, (100,10), medium,  5, 1, 5 -- Done 
+(45)  100, (100,10), high,    5, 1, 5 -- Done
+
+(46)  100, (100,10), low,    10, 1, 5 -- Done
+(47)  100, (100,10), medium, 10, 1, 5 -- Done
+(48)  100, (100,10), high,   10, 1, 5 -- Done
+
+(70)  500, (100,10), low,    10, 1, 5 -- Done
+(71)  500, (100,10), medium, 10, 1, 5
+(72)  500, (100,10), high,   10, 1, 5
+
+(37c*)  100, (25,5), low,     5, 1, 5 -- Done
+(38c*)  100, (25,5), medium,  5, 1, 5 -- Done
+(39c*)  100, (25,5), high,    5, 1, 5 -- Done
+
+* effect sizes are reduced
+
+Contrast large to small effect sizes: {(37,38,39), (37c,38c,39c)}
+Contrast k=5 to k=10: {(37,38,39), (40,41,42)}; {(43,44,45), (46,47,48)}
+Contrast p=25 to p=100: {(37,38,39), (43c,44c,45c)}
+Contrast n=100 to n=250: {(37,38,39), (49,50,51)}
+Contrast n=100 to n=500: {(46,47,48), (70,71,72)}
+Contrast (p,p0)=(p,5) to (p,p0)=(p,10): {(43c,44c,45c), (43,44,45)}
+
+
+
+
+
+# Run simulations
+```{r}
+path <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/Simulations/Testing full method/Results/"
+
+source("/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/Simulations/Testing full method/MultivarMediationSimFunctions.R")
+
+# nsim <- 500
+```
+
+
+## Simulations with l=25
+
+### Simulation 1: n=100, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results1 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results1, file = paste0(path, "Results1b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 2: n=100, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results2 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results2, file = paste0(path, "Results2b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 3: n=100, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results3 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results3, file = paste0(path, "Results3b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 4: n=100, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results4 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results4, file = paste0(path, "Results4b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 5: n=100, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results5 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results5, file = paste0(path, "Results5b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 6: n=100, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results6 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results6, file = paste0(path, "Results6b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 7: n=100, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results7 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results7, file = paste0(path, "Results7b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 8: n=100, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results8 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results8, file = paste0(path, "Results8b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 9: n=100, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results9 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results9, file = paste0(path, "Results9b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 10: n=100, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results10 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results10, file = paste0(path, "Results10b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 11: n=100, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results11 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results11, file = paste0(path, "Results11b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 12: n=100, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results12 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results9, file = paste0(path, "Results12b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 13: n=250, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results13 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results13, file = paste0(path, "Results13b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 14: n=250, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results14 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results14, file = paste0(path, "Results14b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 15: n=250, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results15 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results15, file = paste0(path, "Results15b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 16: n=250, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results16 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results16, file = paste0(path, "Results16b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 17: n=250, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results17 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results17, file = paste0(path, "Results17b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 18: n=250, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results18 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results18, file = paste0(path, "Results18b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 19: n=250, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results19 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results19, file = paste0(path, "Results19b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 20: n=250, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results20 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results20, file = paste0(path, "Results20b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 21: n=250, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results21 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results21, file = paste0(path, "Results21b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 22: n=250, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results22 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results22, file = paste0(path, "Results22b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 23: n=250, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results23 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results23, file = paste0(path, "Results23b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 24: n=250, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results24 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results24, file = paste0(path, "Results24b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 25: n=500, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results25 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results25, file = paste0(path, "Results25b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 26: n=500, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results26 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results26, file = paste0(path, "Results26b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 27: n=500, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results27 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results27, file = paste0(path, "Results27b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 28: n=500, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results28 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results28, file = paste0(path, "Results28b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 29: n=500, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results29 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results29, file = paste0(path, "Results29b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 30: n=500, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results30 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results30, file = paste0(path, "Results30b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 31: n=500, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=5, q=1, corr = "low")
+nsim <- 500
+
+results31 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results31, file = paste0(path, "Results31b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 32: n=500, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results32 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results32, file = paste0(path, "Results32b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 33: n=500, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=5, q=1, corr = "high")
+nsim <- 500
+
+results33 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results33, file = paste0(path, "Results33b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 34: n=500, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=10, q=1, corr = "low")
+nsim <- 500
+
+results34 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results34, file = paste0(path, "Results34b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 35: n=500, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results35 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results35, file = paste0(path, "Results35b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 36: n=500, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=25
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=25, k=10, q=1, corr = "high")
+nsim <- 500
+
+results36 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results36, file = paste0(path, "Results36b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+
+## Simulations with l=5
+### Simulation 37: n=100, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results37 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1",b_scale = 2) # 155.417min
+
+save(results37, file = paste0(path, "Results37b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 38: n=100, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results38 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 153.607min
+
+save(results38, file = paste0(path, "Results38b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 39: n=100, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results39 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 152.604min
+
+save(results39, file = paste0(path, "Results39b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+
+### Simulation 37c: n=100, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results37c <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 1/4, drop_penn = T) # 107.755min
+
+save(results37c, file = paste0(path, "Results37c.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 38c: n=100, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results38c <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 1/4, drop_penn = T) # 113.108min
+
+save(results38c, file = paste0(path, "Results38c.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 39c: n=100, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results39c <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 1/4, drop_penn = T) # 85.569min
+
+save(results39c, file = paste0(path, "Results39c.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 40: n=100, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results40 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 298.284min
+
+save(results40, file = paste0(path, "Results40b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 41: n=100, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results41 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 305.242min
+
+save(results41, file = paste0(path, "Results41b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 42: n=100, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=25, p0=5, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results42 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 300.323min
+
+save(results42, file = paste0(path, "Results42b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 43: n=100, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results43 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1001.839min
+
+save(results43, file = paste0(path, "Results43b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 44: n=100, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results44 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1026.876min
+
+save(results44, file = paste0(path, "Results44b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 45: n=100, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results45 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1022.973min
+
+save(results45, file = paste0(path, "Results45b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+
+### Simulation 43c: n=100, (p,p_0)=(100,5), k=5, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=5, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results43 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1001.839min
+
+save(results43, file = paste0(path, "Results43c.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 44c: n=100, (p,p_0)=(100,5), k=5, \rho = "medium", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=5, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results44 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1026.876min
+
+save(results44, file = paste0(path, "Results44c.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 45c: n=100, (p,p_0)=(100,5), k=5, \rho = "high", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=5, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results45 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 1022.973min
+
+save(results45, file = paste0(path, "Results45c.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+
+### Simulation 46: n=100, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results46 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 2505.901min
+
+save(results46, file = paste0(path, "Results46b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 47: n=100, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results47 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results47, file = paste0(path, "Results47b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 48: n=100, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=100, p=100, p0=10, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results48 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results48, file = paste0(path, "Results48b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 49: n=250, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results49 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results49, file = paste0(path, "Results49b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 50: n=250, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5 -- Done 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results50 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results50, file = paste0(path, "Results50b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 51: n=250, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5 -- Done 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results51 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results51, file = paste0(path, "Results51b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 52: n=250, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results52 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results52, file = paste0(path, "Results52b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 53: n=250, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results53 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results53, file = paste0(path, "Results53b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 54: n=250, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=25, p0=5, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results54 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results54, file = paste0(path, "Results54b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 55: n=250, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results55 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results55, file = paste0(path, "Results55b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 56: n=250, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=5 
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results56 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results56, file = paste0(path, "Results56b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 57: n=250, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results57 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results57, file = paste0(path, "Results57b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 58: n=250, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results58 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results58, file = paste0(path, "Results58b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 59: n=250, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results59 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results59, file = paste0(path, "Results59b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 60: n=250, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=250, p=100, p0=10, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results60 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results60, file = paste0(path, "Results60b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 61: n=500, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results61 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2, b_scale = 2) # 
+
+save(results61, file = paste0(path, "Results61b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 62: n=500, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results62 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results62, file = paste0(path, "Results62b.Rda")) 
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 63: n=500, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results63 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results63, file = paste0(path, "Results63b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 64: n=500, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results64 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results64, file = paste0(path, "Results64b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 65: n=500, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results65 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results65, file = paste0(path, "Results65b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 66: n=500, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=25, p0=5, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results66 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results66, file = paste0(path, "Results66b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 67: n=500, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=5, q=1, corr = "low")
+nsim <- 500
+
+results67 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results67, file = paste0(path, "Results67b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 68: n=500, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=5, q=1, corr = "medium")
+nsim <- 500
+
+results68 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results68, file = paste0(path, "Results68b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 69: n=500, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=5, q=1, corr = "high")
+nsim <- 500
+
+results69 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results69, file = paste0(path, "Results69b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 70: n=500, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=5 -- Done
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=10, q=1, corr = "low")
+nsim <- 500
+
+results70 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results70, file = paste0(path, "Results70b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 71: n=500, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=10, q=1, corr = "medium")
+nsim <- 500
+
+results71 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results71, file = paste0(path, "Results71b.Rda"))
+doParallel::stopImplicitCluster()
+```
+
+### Simulation 72: n=500, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=5
+```{r}
+doParallel::registerDoParallel()
+sim_sett <- list(n=500, p=100, p0=10, l=5, k=10, q=1, corr = "high")
+nsim <- 500
+
+results72 <- run_sim(sim_sett = sim_sett, nsim = nsim, dataGenerator = "v1", b_scale = 2) # 
+
+save(results72, file = paste0(path, "Results72b.Rda"))
+doParallel::stopImplicitCluster()
+```

@@ -1,0 +1,858 @@
+---
+output: pdf_document
+classoption: 
+  - landscape
+geometry: margin = 0.33in, paperheight = 8.5in, paperwidth = 14in
+header-includes:
+  \usepackage{booktabs}
+  \usepackage{multirow}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+```
+
+```{r helpers, eval = F, include = F}
+BinMean <- function (vec, every, na.rm = FALSE) {
+  n <- length(vec)
+  x <- .colMeans(vec, every, n %/% every, na.rm)
+  r <- n %% every
+  if (r) x <- c(x, mean.default(vec[(n - r + 1):n], na.rm = na.rm))
+  x
+}
+
+summTblFunc <- function(res_summ, p, p0, k){
+  #### Row indices ####
+  if(k == 5){
+    row_idx <- c(1:p0, (p+1):(p+p0), (2*p+1):(2*p+p0), (3*p+1):(3*p+p0), (4*p+1):(4*p+p0))
+    row_idx_noise <- c((p0+1):(p0+5), (p+p0+1):(p+p0+5), (2*p+p0+1):(2*p+p0+5), (3*p+p0+1):(3*p+p0+5), (4*p+p0+1):(4*p+p0+5))
+  } else if(k == 10){
+    row_idx <- c(1:p0, (p+1):(p+p0), (2*p+1):(2*p+p0), (3*p+1):(3*p+p0), (4*p+1):(4*p+p0), 
+                 (5*p+1):(5*p+p0), (6*p+1):(6*p+p0), (7*p+1):(7*p+p0), (8*p+1):(8*p+p0), (9*p+1):(9*p+p0))
+    row_idx_noise <- c((0*p+p0+1):(0*p+p0+5), (1*p+p0+1):(1*p+p0+5), (2*p+p0+1):(2*p+p0+5), (3*p+p0+1):(3*p+p0+5), (4*p+p0+1):(4*p+p0+5),
+                       (5*p+p0+1):(5*p+p0+5), (6*p+p0+1):(6*p+p0+5), (7*p+p0+1):(7*p+p0+5), (8*p+p0+1):(8*p+p0+5), (9*p+p0+1):(9*p+p0+5))
+  }
+  
+  res_multivar <- rbind(matrix(c(res_summ$Multivar_PIDE$Multivar_PIDE_SelectPercent[row_idx], 
+                                 1-res_summ$Multivar_PIDE$Multivar_PIDE_SelectPercent[row_idx_noise]),
+                               ncol = k, byrow = T),
+                        matrix(1-BinMean(res_summ$Multivar_PIDE$Multivar_PIDE_SelectPercent[-row_idx], p-p0), nrow = 1))
+  
+  res_univar <- rbind(matrix(c(res_summ$Univar_PIDE$Univar_PIDE_SelectPercent[row_idx],
+                               1-res_summ$Univar_PIDE$Univar_PIDE_SelectPercent[row_idx_noise]), ncol = k, byrow = T),
+                      matrix(1-BinMean(res_summ$Univar_PIDE$Univar_PIDE_SelectPercent[-row_idx], p-p0), nrow = 1))
+  
+  res_specific <- round(matrix(rbind(res_univar, res_multivar), nrow = nrow(res_univar)), 3)
+  
+  colnames(res_specific) <- paste0(c("Uni_Y", "Multi_Y"), rep(1:k, each = 2))
+  rownames(res_specific) <- c(paste0("p", 1:p0), paste0("p",(p0+1):(p0+5)), "AvgNoiseSelAcc")
+  
+  return(res_specific)
+}
+
+#### Do not use ####
+# summTblFunc_orig <- function(res_summ, p, p0, k){
+#   #### Row indices
+#   if(k == 5){
+#     row_idx <- c(1:p0, (p+1):(p+p0), (2*p+1):(2*p+p0), (3*p+1):(3*p+p0), (4*p+1):(4*p+p0))
+#   } else if(k == 10){
+#     row_idx <- c(1:p0, (p+1):(p+p0), (2*p+1):(2*p+p0), (3*p+1):(3*p+p0), (4*p+1):(4*p+p0), 
+#                  (5*p+1):(5*p+p0), (6*p+1):(6*p+p0), (7*p+1):(7*p+p0), (8*p+1):(8*p+p0), (9*p+1):(9*p+p0))
+#   }
+#   
+#   res_multivar <- rbind(matrix(res_summ$Multivar_PIDE$Multivar_PIDE_SelectPercent[row_idx], nrow = p0, ncol = k, byrow = F),
+#                         matrix(BinMean(res_summ$Multivar_PIDE$Multivar_PIDE_SelectPercent[-row_idx], p-p0), nrow = 1))
+#   
+#   res_univar <- rbind(matrix(res_summ$Univar_PIDE$Univar_PIDE_SelectPercent[row_idx], nrow = p0, ncol = k, byrow = F),
+#                       matrix(BinMean(res_summ$Univar_PIDE$Univar_PIDE_SelectPercent[-row_idx], p-p0), nrow = 1))
+#   
+#   res_specific <- round(matrix(rbind(res_univar, res_multivar), nrow = nrow(res_univar)), 3)
+#   
+#   colnames(res_specific) <- paste0(c("Uni_Y", "Multi_Y"), rep(1:k, each = 2))
+#   rownames(res_specific) <- c(paste0("p", 1:p0), "AvgNoiseSelAcc")
+#   
+#   return(res_specific)
+# }
+```
+
+```{r, eval = F, echo = F}
+path <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/Simulations/Testing full method/Results/"
+
+load(paste0(path, "Summaries/res71b_summary.Rda"))
+res_summ <- res71_summary
+n<-500; p<-100; p0<-10; k<-10
+
+summTblFunc(res_summ = res_summ, p = p, p0 = p0, k = k) %>% 
+  knitr::kable(format = "latex") %>%
+  clipr::write_clip()
+
+rm(res51_summary)
+```
+
+<!--
+# Comparisons for paper
+## Comparisons
+(37)  100, (25,5), low,     5, 1, 5 -- Done
+(38)  100, (25,5), medium,  5, 1, 5
+(39)  100, (25,5), high,    5, 1, 5
+
+(40)  100, (25,5), low,    10, 1, 5
+(41)  100, (25,5), medium, 10, 1, 5
+(42)  100, (25,5), high,   10, 1, 5
+
+(43c)  100, (100,5), low,     5, 1, 5
+(44c)  100, (100,5), medium,  5, 1, 5
+(45c)  100, (100,5), high,    5, 1, 5
+
+(49) 250, (25,5), low,     5, 1, 5
+(50) 250, (25,5), medium,  5, 1, 5
+(51) 250, (25,5), high,    5, 1, 5
+
+(43)  100, (100,10), low,     5, 1, 5
+(44)  100, (100,10), medium,  5, 1, 5
+(45)  100, (100,10), high,    5, 1, 5
+
+(46)  100, (100,10), low,    10, 1, 5
+(47)  100, (100,10), medium, 10, 1, 5
+(48)  100, (100,10), high,   10, 1, 5
+
+(70)  500, (100,10), low,    10, 1, 5
+(71)  500, (100,10), medium, 10, 1, 5
+(72)  500, (100,10), high,   10, 1, 5
+
+(37c*)  100, (25,5), low,     5, 1, 5
+(38c*)  100, (25,5), medium,  5, 1, 5
+(39c*)  100, (25,5), high,    5, 1, 5
+
+## Contrasts
+Contrast k=5 to k=10: {(37,38,39), (40,41,42)}; {(43,44,45), (46,47,48)}
+Contrast p=25 to p=100: {(37,38,39), (43c,44c,45c)}
+Contrast n=100 to n=250: {(37,38,39), (49,50,51)}
+Contrast n=100 to n=500: {(46,47,48), (70,71,72)}
+Contrast (p,p0)=(p,5) to (p,p0)=(p,10): {(43c,44c,45c), (43,44,45)}
+Contrast moderate to small effect sizes: {(37,38,39),(37c,38c,39c)}
+
+All simulations have q = 1, l = 5 and are based on 500 independently generated datasets, unless otherwise noted.
+* small effect sizes
+-->
+
+# Block 1
+<!-- ### Sim 37; $n=100, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 37) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.966 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.990 & 0.996 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.056 & 0.010 & 0.122 & 0.024 & 0.186 & 0.086 & 0.558 & 0.336 & 0.192 & 0.036 \\
+ & $\beta_7$ & 0.004 & 0.010 & 0.004 & 0.016 & 0.048 & 0.078 & 0.390 & 0.332 & 0.046 & 0.048 \\
+ & $\beta_8$ & 0.012 & 0.002 & 0.036 & 0.008 & 0.082 & 0.016 & 0.434 & 0.130 & 0.060 & 0.012 \\
+ & $\beta_9$ & 0.140 & 0.014 & 0.158 & 0.032 & 0.240 & 0.078 & 0.580 & 0.156 & 0.206 & 0.062 \\
+ & $\beta_{10}$ & 0.068 & 0.006 & 0.092 & 0.012 & 0.212 & 0.038 & 0.618 & 0.172 & 0.220 & 0.030 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.217 & 0.077 & 0.078 & 0.077 & 0.112 & 0.028 & 0.256 & 0.065 & 0.240 & 0.046 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 38; $n=100, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 38) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.958 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 0.996 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.056 & 0.016 & 0.122 & 0.026 & 0.186 & 0.100 & 0.558 & 0.322 & 0.192 & 0.054 \\
+ & $\beta_7$ & 0.008 & 0.018 & 0.006 & 0.024 & 0.054 & 0.092 & 0.378 & 0.296 & 0.044 & 0.064 \\
+ & $\beta_8$ & 0.010 & 0.002 & 0.028 & 0.004 & 0.082 & 0.020 & 0.420 & 0.140 & 0.074 & 0.010 \\
+ & $\beta_9$ & 0.146 & 0.014 & 0.156 & 0.028 & 0.230 & 0.080 & 0.550 & 0.138 & 0.184 & 0.060 \\
+ & $\beta_{10}$ & 0.074 & 0.008 & 0.098 & 0.016 & 0.218 & 0.036 & 0.610 & 0.178 & 0.222 & 0.040 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.217 & 0.089 & 0.077 & 0.086 & 0.111 & 0.029 & 0.254 & 0.064 & 0.238 & 0.049 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 39; $n=100, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 39) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.950 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 0.990 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.056 & 0.020 & 0.122 & 0.042 & 0.186 & 0.098 & 0.558 & 0.334 & 0.192 & 0.068 \\
+ & $\beta_7$ & 0.004 & 0.020 & 0.004 & 0.036 & 0.042 & 0.080 & 0.382 & 0.320 & 0.044 & 0.066 \\
+ & $\beta_8$ & 0.008 & 0 & 0.046 & 0.004 & 0.094 & 0.016 & 0.436 & 0.134 & 0.060 & 0.008 \\
+ & $\beta_9$ & 0.120 & 0.016 & 0.174 & 0.036 & 0.238 & 0.082 & 0.586 & 0.122 & 0.198 & 0.072 \\
+ & $\beta_{10}$ & 0.074 & 0.004 & 0.122 & 0.014 & 0.218 & 0.052 & 0.622 & 0.184 & 0.230 & 0.046 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.217 & 0.102 & 0.076 & 0.097 & 0.112 & 0.029 & 0.254 & 0.064 & 0.243 & 0.048 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+# Block 2
+<!-- ### Sim 40; $n=100, (p,p_0)=(25,5), k=10, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 40) $n=100, (p,p_0)=(25,5), k=10, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccccccccccccc}
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.970 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.996 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.980 & 0.922 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.064 & 0.010 & 0.106 & 0.036 & 0.206 & 0.112 & 0.586 & 0.424 & 0.210 & 0.084 & 0.004 & 0.012 & 0.016 & 0.032 & 0.034 & 0.090 & 0.350 & 0.404 & 0.048 & 0.084 \\
+ & $\beta_7$ & 0.008 & 0.008 & 0.036 & 0.032 & 0.094 & 0.108 & 0.420 & 0.422 & 0.086 & 0.080 & 0.136 & 0.018 & 0.176 & 0.034 & 0.276 & 0.084 & 0.544 & 0.294 & 0.206 & 0.066 \\
+ & $\beta_8$ & 0.090 & 0.024 & 0.136 & 0.038 & 0.214 & 0.062 & 0.584 & 0.302 & 0.202 & 0.054 & 0.004 & 0.016 & 0.022 & 0.032 & 0.052 & 0.098 & 0.400 & 0.192 & 0.052 & 0.028 \\
+ & $\beta_9$ & 0.010 & 0.002 & 0.048 & 0.026 & 0.102 & 0.042 & 0.436 & 0.138 & 0.094 & 0.058 & 0.010 & 0.016 & 0.032 & 0.044 & 0.064 & 0.092 & 0.372 & 0.172 & 0.054 & 0.044 \\
+ & $\beta_{10}$ & 0.142 & 0.028 & 0.202 & 0.096 & 0.226 & 0.116 & 0.518 & 0.226 & 0.186 & 0.022 & 0.018 & 0.010 & 0.058 & 0.048 & 0.124 & 0.110 & 0.526 & 0.200 & 0.110 & 0.036 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.225 & 0.111 & 0.072 & 0.111 & 0.112 & 0.115 & 0.253 & 0.091 & 0.240 & 0.080 & 0.090 & 0.068 & 0.122 & 0.040 & 0.101 & 0.060 & 0.258 & 0.083 & 0.151 & 0.073\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 41; $n=100, (p,p_0)=(25,5), k=10, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 41) $n=100, (p,p_0)=(25,5), k=10, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for\\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.964 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.998 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.996 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.984 & 0.916 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.064 & 0.026 & 0.106 & 0.050 & 0.206 & 0.128 & 0.586 & 0.444 & 0.210 & 0.100 & 0.004 & 0.014 & 0.008 & 0.040 & 0.036 & 0.102 & 0.352 & 0.446 & 0.038 & 0.092 \\
+ & $\beta_7$ & 0.014 & 0.022 & 0.028 & 0.036 & 0.100 & 0.108 & 0.398 & 0.444 & 0.074 & 0.098 & 0.122 & 0.026 & 0.170 & 0.042 & 0.262 & 0.096 & 0.564 & 0.314 & 0.194 & 0.068 \\
+ & $\beta_8$ & 0.098 & 0.028 & 0.126 & 0.044 & 0.240 & 0.088 & 0.600 & 0.266 & 0.218 & 0.066 & 0.008 & 0.014 & 0.016 & 0.032 & 0.066 & 0.102 & 0.384 & 0.182 & 0.056 & 0.050 \\
+ & $\beta_9$ & 0.006 & 0 & 0.030 & 0.018 & 0.112 & 0.048 & 0.444 & 0.146 & 0.108 & 0.042 & 0.008 & 0.014 & 0.026 & 0.052 & 0.060 & 0.072 & 0.394 & 0.210 & 0.072 & 0.044 \\
+ & $\beta_{10}$ & 0.140 & 0.038 & 0.182 & 0.094 & 0.282 & 0.106 & 0.518 & 0.222 & 0.204 & 0.018 & 0.016 & 0.008 & 0.044 & 0.042 & 0.120 & 0.120 & 0.528 & 0.214 & 0.112 & 0.046 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.225 & 0.122 & 0.071 & 0.120 & 0.114 & 0.126 & 0.254 & 0.099 & 0.248 & 0.089 & 0.093 & 0.069 & 0.121 & 0.041 & 0.101 & 0.062 & 0.264 & 0.082 & 0.150 & 0.077 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 42; $n=100, (p,p_0)=(25,5), k=10, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 42) $n=100, (p,p_0)=(25,5), k=10, \rho = \text{high}$}
+\begin{tabular}{cccccccccccccccccccccc} 
+\toprule
+ &  & \multicolumn{20}{c}{Response} \\
+ &  & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.960 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.980 & 0.890 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.064 & 0.034 & 0.106 & 0.052 & 0.206 & 0.168 & 0.586 & 0.444 & 0.210 & 0.126 & 0.002 & 0.024 & 0.010 & 0.050 & 0.046 & 0.142 & 0.388 & 0.444 & 0.038 & 0.124 \\
+ & $\beta_7$ & 0.014 & 0.026 & 0.024 & 0.044 & 0.090 & 0.146 & 0.414 & 0.454 & 0.060 & 0.118 & 0.130 & 0.028 & 0.186 & 0.054 & 0.246 & 0.104 & 0.540 & 0.312 & 0.222 & 0.090 \\
+ & $\beta_8$ & 0.092 & 0.028 & 0.142 & 0.054 & 0.230 & 0.102 & 0.608 & 0.298 & 0.214 & 0.096 & 0.006 & 0.018 & 0.022 & 0.048 & 0.058 & 0.114 & 0.408 & 0.196 & 0.052 & 0.032 \\
+ & $\beta_9$ & 0.014 & 0.002 & 0.038 & 0.016 & 0.102 & 0.046 & 0.466 & 0.136 & 0.102 & 0.042 & 0.010 & 0.016 & 0.032 & 0.040 & 0.070 & 0.080 & 0.428 & 0.200 & 0.076 & 0.060 \\
+ & $\beta_{10}$ & 0.136 & 0.034 & 0.176 & 0.086 & 0.244 & 0.120 & 0.594 & 0.218 & 0.244 & 0.016 & 0.032 & 0.016 & 0.028 & 0.032 & 0.120 & 0.094 & 0.496 & 0.208 & 0.126 & 0.044 \\ 
+\hline
+\multicolumn{2}{c}{Avg. sel. freq. for noise} & 0.225 & 0.134 & 0.074 & 0.128 & 0.109 & 0.137 & 0.258 & 0.104 & 0.243 & 0.098 & 0.096 & 0.073 & 0.125 & 0.039 & 0.105 & 0.063 & 0.261 & 0.078 & 0.149 & 0.075 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+# Block 3
+<!-- ### Sim 43; $n=100, (p,p_0)=(100,10), k=5, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 43) $n=100, (p,p_0)=(100,10), k=5, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.758 & 0.538 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 0.976 & 0.968 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 0.990 \\
+ & $\beta_5$ & 0.956 & 1 & 0.462 & 0.998 & 1 & 1 & 1 & 1 & 0.996 & 1 \\
+ & $\beta_6$ & 0.864 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_7$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.980 \\
+ & $\beta_8$ & 1 & 1 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 0.986 & 1 & 1 & 1 & 0.124 & 1 \\
+ & $\beta_{10}$ & 0.976 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.062 & 0.030 & 0.190 & 0.124 & 0.172 & 0.122 & 0 & 0.004 & 0.180 & 0.112 \\
+ & $\beta_{12}$ & 0.088 & 0.016 & 0.218 & 0.072 & 0.176 & 0.056 & 0.014 & 0.004 & 0.180 & 0.112 \\
+ & $\beta_{13}$ & 0.152 & 0.024 & 0.118 & 0.062 & 0.166 & 0.028 & 0.040 & 0.036 & 0.142 & 0.120 \\
+ & $\beta_{14}$ & 0.118 & 0.032 & 0.266 & 0.092 & 0.278 & 0.072 & 0.026 & 0.010 & 0.272 & 0.088 \\
+ & $\beta_{15}$ & 0.048 & 0.226 & 0.122 & 0.388 & 0.106 & 0.368 & 0.006 & 0.068 & 0.094 & 0.360 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.094 & 0.172 & 0.064 & 0.131 & 0.044 & 0.243 & 0.074 & 0.122 & 0.305 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 44; $n=100, (p,p_0)=(100,10), k=5, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 44) $n=100, (p,p_0)=(100,10), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for\\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.758 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 0.970 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.992 & 1 \\
+ & $\beta_5$ & 0.960 & 1 & 0.470 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 0.852 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_7$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.964 \\
+ & $\beta_8$ & 1 & 1 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 0.998 & 1 & 1 & 1 & 0.982 & 1 & 1 & 1 & 0.124 & 0.370 \\
+ & $\beta_{10}$ & 0.976 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.062 & 0.038 & 0.190 & 0.134 & 0.172 & 0.138 & 0 & 0.004 & 0.180 & 0.128 \\
+ & $\beta_{12}$ & 0.072 & 0.032 & 0.210 & 0.116 & 0.188 & 0.112 & 0.010 & 0.006 & 0.188 & 0.128 \\
+ & $\beta_{13}$ & 0.164 & 0.034 & 0.130 & 0.078 & 0.172 & 0.024 & 0.046 & 0.026 & 0.144 & 0.132 \\
+ & $\beta_{14}$ & 0.136 & 0.036 & 0.270 & 0.092 & 0.296 & 0.062 & 0.028 & 0.006 & 0.286 & 0.086 \\
+ & $\beta_{15}$ & 0.052 & 0.040 & 0.128 & 0.080 & 0.104 & 0.084 & 0.006 & 0.018 & 0.104 & 0.148 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.117 & 0.171 & 0.110 & 0.131 & 0.043 & 0.246 & 0.073 & 0.123 & 0.077 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 45; $n=100, (p,p_0)=(100,10), k=5, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 45) $n=100, (p,p_0)=(100,10), k=5, \rho = \text{high}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.758 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 0.966 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 0.996 & 1 & 1 & 1 & 1 & 1 & 0.994 & 1 \\
+ & $\beta_5$ & 0.956 & 1 & 0.462 & 0.996 & 1 & 1 & 1 & 1 & 0.994 & 1 \\
+ & $\beta_6$ & 0.862 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_7$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.966 \\
+ & $\beta_8$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 0.998 & 1 & 1 & 1 & 0.984 & 1 & 1 & 1 & 0.122 & 0.378 \\
+ & $\beta_{10}$ & 0.980 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.062 & 0.040 & 0.190 & 0.142 & 0.172 & 0.136 & 0 & 0.006 & 0.180 & 0.144 \\
+ & $\beta_{12}$ & 0.062 & 0.038 & 0.194 & 0.114 & 0.174 & 0.100 & 0.012 & 0.004 & 0.186 & 0.132 \\
+ & $\beta_{13}$ & 0.170 & 0.038 & 0.138 & 0.074 & 0.182 & 0.030 & 0.034 & 0.018 & 0.156 & 0.134 \\
+ & $\beta_{14}$ & 0.124 & 0.036 & 0.288 & 0.078 & 0.328 & 0.076 & 0.028 & 0.004 & 0.284 & 0.086 \\
+ & $\beta_{15}$ & 0.048 & 0.040 & 0.128 & 0.094 & 0.108 & 0.078 & 0.006 & 0.014 & 0.094 & 0.160 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.118 & 0.170 & 0.109 & 0.133 & 0.042 & 0.243 & 0.071 & 0.122 & 0.077 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+# Block 4
+<!-- ### Sim 43c; $n=100, (p,p_0)=(100,5), k=5, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 43c) $n=100, (p,p_0)=(100,5), k=5, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.984 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.628 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.926 & 1 \\
+ & $\beta_3$ & 0.994 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.300 & 0.872 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.002 & 0.002 & 0.008 & 0.014 & 0.016 & 0.020 & 0.362 & 0.304 & 0.014 & 0.028 \\
+ & $\beta_7$ & 0 & 0 & 0 & 0.006 & 0.026 & 0.026 & 0.242 & 0.270 & 0.016 & 0.042 \\
+ & $\beta_8$ & 0 & 0 & 0 & 0 & 0.020 & 0.006 & 0.226 & 0.150 & 0.012 & 0.008 \\
+ & $\beta_9$ & 0.038 & 0.014 & 0.062 & 0.020 & 0.138 & 0.022 & 0.432 & 0.130 & 0.124 & 0.048 \\
+ & $\beta_{10}$ & 0 & 0.002 & 0.004 & 0.006 & 0.022 & 0.022 & 0.348 & 0.140 & 0.020 & 0.016 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.092 & 0.079 & 0.074 & 0.075 & 0.059 & 0.030 & 0.169 & 0.049 & 0.093 & 0.047 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\newpage
+
+<!-- ### Sim 44c; $n=100, (p,p_0)=(100,5), k=5, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 44c) $n=100, (p,p_0)=(100,5), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.984 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.606 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.936 & 1 \\
+ & $\beta_3$ & 0.994 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.306 & 0.884 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.002 & 0.008 & 0.008 & 0.012 & 0.016 & 0.040 & 0.362 & 0.304 & 0.014 & 0.030 \\
+ & $\beta_7$ & 0 & 0.008 & 0 & 0.006 & 0.018 & 0.036 & 0.250 & 0.288 & 0.016 & 0.042 \\
+ & $\beta_8$ & 0 & 0.002 & 0 & 0.004 & 0.022 & 0.004 & 0.210 & 0.138 & 0.008 & 0.008 \\
+ & $\beta_9$ & 0.030 & 0.020 & 0.060 & 0.026 & 0.116 & 0.030 & 0.420 & 0.130 & 0.112 & 0.054 \\
+ & $\beta_{10}$ & 0 & 0 & 0.010 & 0.004 & 0.026 & 0.014 & 0.340 & 0.130 & 0.020 & 0.022 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.092 & 0.085 & 0.074 & 0.081 & 0.060 & 0.030 & 0.167 & 0.049 & 0.093 & 0.047 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 45c; $n=100, (p,p_0)=(100,5), k=5, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 45c) $n=100, (p,p_0)=(100,5), k=5, \rho = \text{high}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.984 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.610 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.910 & 1 \\
+ & $\beta_3$ & 0.992 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.308 & 0.880 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.002 & 0.008 & 0.008 & 0.010 & 0.016 & 0.050 & 0.362 & 0.326 & 0.014 & 0.042 \\
+ & $\beta_7$ & 0 & 0.008 & 0.002 & 0.006 & 0.014 & 0.044 & 0.284 & 0.296 & 0.016 & 0.046 \\
+ & $\beta_8$ & 0 & 0.002 & 0.004 & 0.004 & 0.022 & 0.002 & 0.200 & 0.108 & 0.008 & 0.016 \\
+ & $\beta_9$ & 0.030 & 0.010 & 0.074 & 0.020 & 0.110 & 0.032 & 0.406 & 0.140 & 0.122 & 0.056 \\
+ & $\beta_{10}$ & 0 & 0.002 & 0.008 & 0 & 0.020 & 0.020 & 0.358 & 0.174 & 0.014 & 0.022 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.092 & 0.091 & 0.074 & 0.087 & 0.060 & 0.029 & 0.168 & 0.051 & 0.092 & 0.048 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+# Block 5
+<!-- ### Sim 49; $n=250, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 49) $n=250, (p,p_0)=(25,5), k=5, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noice\end{tabular}} & $\beta_6$ & 0.026 & 0 & 0.048 & 0.008 & 0.128 & 0.028 & 0.494 & 0.096 & 0.128 & 0.012 \\
+ & $\beta_7$ & 0 & 0 & 0 & 0.002 & 0.004 & 0.008 & 0.162 & 0.074 & 0.004 & 0.014 \\
+ & $\beta_8$ & 0 & 0 & 0.002 & 0 & 0.020 & 0 & 0.306 & 0.068 & 0.020 & 0 \\
+ & $\beta_9$ & 0.070 & 0.002 & 0.112 & 0.006 & 0.180 & 0.010 & 0.444 & 0.038 & 0.152 & 0.014 \\
+ & $\beta_{10}$ & 0.052 & 0 & 0.066 & 0 & 0.146 & 0.014 & 0.480 & 0.076 & 0.106 & 0.022 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.173 & 0.024 & 0.020 & 0.018 & 0.053 & 0.007 & 0.195 & 0.017 & 0.177 & 0.024 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 50; $n=250, (p,p_0)=(25,5), k=5, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 50) $n=250, (p,p_0)=(25,5), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_1$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.026 & 0 & 0.048 & 0.008 & 0.128 & 0.036 & 0.494 & 0.118 & 0.128 & 0.014 \\
+ & $\beta_7$ & 0 & 0.002 & 0 & 0.002 & 0.006 & 0.008 & 0.142 & 0.098 & 0.002 & 0.010 \\
+ & $\beta_8$ & 0 & 0 & 0.006 & 0 & 0.024 & 0 & 0.320 & 0.068 & 0.022 & 0 \\
+ & $\beta_9$ & 0.072 & 0 & 0.108 & 0.004 & 0.178 & 0.020 & 0.428 & 0.026 & 0.160 & 0.016 \\
+ & $\beta_{10}$ & 0.044 & 0.002 & 0.064 & 0.002 & 0.130 & 0.024 & 0.502 & 0.078 & 0.104 & 0.020 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.173 & 0.030 & 0.020 & 0.023 & 0.054 & 0.006 & 0.191 & 0.016 & 0.174 & 0.025 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 51; $n=250, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 51) $n=250, (p,p_0)=(25,5), k=5, \rho = \text{high}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.026 & 0 & 0.048 & 0.006 & 0.128 & 0.036 & 0.494 & 0.168 & 0.128 & 0.016 \\
+ & $\beta_7$ & 0 & 0 & 0 & 0.002 & 0.004 & 0.014 & 0.140 & 0.146 & 0.002 & 0.010 \\
+ & $\beta_8$ & 0 & 0 & 0.006 & 0 & 0.016 & 0 & 0.284 & 0.064 & 0.020 & 0.002 \\
+ & $\beta_9$ & 0.072 & 0.002 & 0.118 & 0.004 & 0.184 & 0.016 & 0.428 & 0.030 & 0.168 & 0.006 \\
+ & $\beta_{10}$ & 0.026 & 0 & 0.060 & 0.002 & 0.132 & 0.018 & 0.500 & 0.078 & 0.112 & 0.020 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.173 & 0.038 & 0.018 & 0.031 & 0.049 & 0.006 & 0.187 & 0.015 & 0.172 & 0.025 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+# Block 6
+<!-- ### Sim 46; $n=100, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 46) $n=250, (p,p_0)=(100,10), k=10, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.782 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.968 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 0.994 & 1 \\
+ & $\beta_3$ & 0.958 & 1 & 0.464 & 1 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.864 & 1 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 0.996 & 1 & 1 & 1 & 0.984 & 1 & 1 & 1 & 0.128 & 0.994 & 0.972 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 1 & 0.996 & 1 & 1 & 1 & 1 & 1 & 0.958 & 0.752 & 0.658 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.982 \\
+ & $\beta_7$ & 0.974 & 0.982 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.994 & 0.986 \\
+ & $\beta_8$ & 0.958 & 1 & 0.440 & 0.908 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.858 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.912 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_{10}$ & 0.996 & 1 & 1 & 1 & 0.984 & 1 & 1 & 1 & 0.126 & 0.572 & 0.964 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.066 & 0.076 & 0.198 & 0.186 & 0.158 & 0.164 & 0.006 & 0.010 & 0.152 & 0.196 & 0.082 & 0.084 & 0.196 & 0.204 & 0.190 & 0.166 & 0.004 & 0.014 & 0.198 & 0.190 \\
+ & $\beta_{12}$ & 0.150 & 0.100 & 0.116 & 0.174 & 0.178 & 0.164 & 0.044 & 0.032 & 0.150 & 0.200 & 0.130 & 0.048 & 0.284 & 0.166 & 0.294 & 0.154 & 0.030 & 0.004 & 0.314 & 0.138 \\
+ & $\beta_{13}$ & 0.038 & 0.056 & 0.138 & 0.178 & 0.120 & 0.146 & 0.010 & 0.006 & 0.096 & 0.122 & 0.060 & 0.024 & 0.202 & 0.116 & 0.178 & 0.074 & 0.002 & 0 & 0.166 & 0.130 \\
+ & $\beta_{14}$ & 0.072 & 0.008 & 0.234 & 0.078 & 0.206 & 0.060 & 0.010 & 0 & 0.204 & 0.076 & 0.172 & 0.012 & 0.122 & 0.056 & 0.176 & 0.076 & 0.042 & 0.024 & 0.162 & 0.110 \\
+ & $\beta_{15}$ & 0.134 & 0.040 & 0.306 & 0.122 & 0.316 & 0.112 & 0.036 & 0.004 & 0.310 & 0.122 & 0.042 & 0.028 & 0.128 & 0.120 & 0.114 & 0.068 & 0.008 & 0.002 & 0.122 & 0.126 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.152 & 0.171 & 0.147 & 0.133 & 0.135 & 0.245 & 0.117 & 0.119 & 0.119 & 0.157 & 0.079 & 0.174 & 0.058 & 0.130 & 0.051 & 0.247 & 0.104 & 0.124 & 0.075 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 47; $n=100, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 47) $n=250, (p,p_0)=(100,10), k=10, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.782 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.974 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.996 & 1 \\
+ & $\beta_3$ & 0.964 & 1 & 0.456 & 1 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.862 & 1 & 1 & 0.996 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.990 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 0.986 & 1 & 1 & 1 & 0.122 & 0.988 & 0.972 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 0.958 & 0.768 & 0.650 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.986 \\
+ & $\beta_7$ & 0.970 & 0.978 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.996 & 0.986 \\
+ & $\beta_8$ & 0.958 & 1 & 0.442 & 0.916 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.864 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.918 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_{10}$ & 0.996 & 1 & 1 & 1 & 0.984 & 1 & 1 & 1 & 0.126 & 0.560 & 0.964 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.066 & 0.072 & 0.198 & 0.182 & 0.158 & 0.166 & 0.006 & 0.012 & 0.152 & 0.152 & 0.084 & 0.076 & 0.198 & 0.194 & 0.184 & 0.164 & 0.010 & 0.012 & 0.192 & 0.168 \\
+ & $\beta_{12}$ & 0.148 & 0.092 & 0.132 & 0.160 & 0.182 & 0.162 & 0.044 & 0.024 & 0.164 & 0.172 & 0.112 & 0.058 & 0.268 & 0.152 & 0.304 & 0.142 & 0.036 & 0.002 & 0.298 & 0.126 \\
+ & $\beta_{13}$ & 0.046 & 0.064 & 0.148 & 0.168 & 0.130 & 0.144 & 0.010 & 0.006 & 0.094 & 0.124 & 0.048 & 0.024 & 0.210 & 0.102 & 0.184 & 0.076 & 0.006 & 0.002 & 0.184 & 0.134 \\
+ & $\beta_{14}$ & 0.074 & 0.012 & 0.236 & 0.076 & 0.216 & 0.060 & 0.004 & 0 & 0.190 & 0.082 & 0.172 & 0.010 & 0.138 & 0.064 & 0.160 & 0.054 & 0.038 & 0.030 & 0.144 & 0.110 \\
+ & $\beta_{15}$ & 0.118 & 0.050 & 0.304 & 0.134 & 0.282 & 0.108 & 0.028 & 0.002 & 0.318 & 0.108 & 0.052 & 0.044 & 0.128 & 0.120 & 0.112 & 0.062 & 0.006 & 0.002 & 0.122 & 0.144 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.149 & 0.171 & 0.145 & 0.132 & 0.131 & 0.246 & 0.116 & 0.121 & 0.119 & 0.158 & 0.079 & 0.172 & 0.058 & 0.130 & 0.050 & 0.247 & 0.104 & 0.123 & 0.074 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 48; $n=100, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 48) $n=250, (p,p_0)=(100,10), k=10, \rho = \text{high}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.782 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 0.980 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.996 & 1 \\
+ & $\beta_3$ & 0.954 & 1 & 0.460 & 1 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.866 & 1 & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.990 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 0.988 & 1 & 1 & 1 & 0.124 & 0.988 & 0.980 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 1 & 0.998 & 1 & 1 & 1 & 1 & 1 & 0.952 & 0.772 & 0.644 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.982 \\
+ & $\beta_7$ & 0.982 & 0.978 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.998 & 0.988 \\
+ & $\beta_8$ & 0.966 & 1 & 0.442 & 0.908 & 1 & 1 & 1 & 1 & 0.998 & 1 & 0.870 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.916 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_{10}$ & 0.998 & 1 & 1 & 1 & 0.988 & 1 & 1 & 1 & 0.114 & 0.566 & 0.966 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.066 & 0.078 & 0.198 & 0.176 & 0.158 & 0.160 & 0.006 & 0.018 & 0.152 & 0.162 & 0.068 & 0.080 & 0.208 & 0.178 & 0.180 & 0.150 & 0.006 & 0.018 & 0.192 & 0.150 \\
+ & $\beta_{12}$ & 0.146 & 0.078 & 0.132 & 0.136 & 0.174 & 0.154 & 0.042 & 0.040 & 0.160 & 0.172 & 0.112 & 0.050 & 0.260 & 0.150 & 0.302 & 0.128 & 0.028 & 0 & 0.292 & 0.142 \\
+ & $\beta_{13}$ & 0.044 & 0.060 & 0.146 & 0.176 & 0.110 & 0.130 & 0.010 & 0.004 & 0.090 & 0.152 & 0.050 & 0.026 & 0.208 & 0.090 & 0.184 & 0.068 & 0.006 & 0.010 & 0.182 & 0.112 \\
+ & $\beta_{14}$ & 0.072 & 0.008 & 0.224 & 0.066 & 0.198 & 0.068 & 0.002 & 0 & 0.170 & 0.100 & 0.162 & 0.010 & 0.138 & 0.060 & 0.174 & 0.050 & 0.046 & 0.032 & 0.142 & 0.120 \\
+ & $\beta_{15}$ & 0.130 & 0.040 & 0.358 & 0.132 & 0.296 & 0.120 & 0.030 & 0.004 & 0.310 & 0.124 & 0.048 & 0.044 & 0.138 & 0.098 & 0.102 & 0.054 & 0.012 & 0.004 & 0.104 & 0.134 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.155 & 0.147 & 0.170 & 0.144 & 0.132 & 0.127 & 0.244 & 0.116 & 0.122 & 0.118 & 0.157 & 0.080 & 0.171 & 0.058 & 0.130 & 0.049 & 0.250 & 0.104 & 0.124 & 0.073 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+# Block 7
+<!-- ### Sim 70; $n=500, (p,p_0)=(100,10), k=10, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 70) $n=500, (p,p_0)=(100,10), k=10, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_7$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_8$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 0.902 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_{10}$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.134 & 0 & 0.244 & 0.006 & 0.264 & 0.004 & 0.022 & 0 & 0.236 & 0.006 & 0.124 & 0.002 & 0.242 & 0.008 & 0.220 & 0.012 & 0.036 & 0 & 0.246 & 0.036 \\
+ & $\beta_{12}$ & 0.012 & 0.004 & 0.018 & 0.020 & 0.038 & 0.032 & 0.002 & 0 & 0.032 & 0.052 & 0.080 & 0 & 0.270 & 0.014 & 0.246 & 0.012 & 0.014 & 0 & 0.206 & 0.014 \\
+ & $\beta_{13}$ & 0.084 & 0 & 0.232 & 0.012 & 0.228 & 0.018 & 0.026 & 0 & 0.246 & 0.064 & 0.012 & 0 & 0.038 & 0.004 & 0.042 & 0 & 0 & 0 & 0.046 & 0.044 \\
+ & $\beta_{14}$ & 0.104 & 0 & 0.262 & 0.030 & 0.188 & 0.010 & 0.032 & 0 & 0.252 & 0.374 & 0.020 & 0 & 0.034 & 0.020 & 0.030 & 0.040 & 0.002 & 0.008 & 0.042 & 0.066 \\
+ & $\beta_{15}$ & 0.092 & 0 & 0.218 & 0 & 0.204 & 0.010 & 0.022 & 0 & 0.230 & 0.006 & 0.004 & 0 & 0.014 & 0.010 & 0.020 & 0.002 & 0 & 0 & 0.034 & 0.058 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.223 & 0.010 & 0.241 & 0.011 & 0.032 & 0.012 & 0.245 & 0.009 & 0.256 & 0.015 & 0.065 & 0.009 & 0.209 & 0.022 & 0.038 & 0.017 & 0.248 & 0.012 & 0.056 & 0.010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+<!-- ### Sim 71; $n=500, (p,p_0)=(100,10), k=10, \rho = "medium", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 71) $n=500, (p,p_0)=(100,10), k=10, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccccccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{20}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} & \multicolumn{2}{c}{$Y_6$} & \multicolumn{2}{c}{$Y_7$} & \multicolumn{2}{c}{$Y_8$} & \multicolumn{2}{c}{$Y_9$} & \multicolumn{2}{c}{$Y_{10}$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{10}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_2$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_3$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_4$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_5$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_6$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_7$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_8$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 0.898 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_9$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\
+ & $\beta_{10}$ & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1.00 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 & 1 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_{11}$ & 0.134 & 0.004 & 0.244 & 0.012 & 0.264 & 0.012 & 0.022 & 0.00 & 0.236 & 0.008 & 0.130 & 0.004 & 0.238 & 0.016 & 0.266 & 0.014 & 0.054 & 0 & 0.260 & 0.038 \\
+ & $\beta_{12}$ & 0.008 & 0.006 & 0.018 & 0.024 & 0.028 & 0.020 & 0 & 0.00 & 0.030 & 0.052 & 0.094 & 0 & 0.272 & 0.006 & 0.208 & 0.010 & 0.012 & 0 & 0.228 & 0.016 \\
+ & $\beta_{13}$ & 0.088 & 0.002 & 0.254 & 0.006 & 0.244 & 0.014 & 0.022 & 0.00 & 0.254 & 0.068 & 0.006 & 0 & 0.046 & 0.002 & 0.036 & 0.002 & 0 & 0 & 0.032 & 0.048 \\
+ & $\beta_{14}$ & 0.114 & 0 & 0.236 & 0.020 & 0.208 & 0.012 & 0.028 & 0.00 & 0.246 & 0.384 & 0.022 & 0.002 & 0.030 & 0.018 & 0.026 & 0.042 & 0 & 0.010 & 0.044 & 0.068 \\
+ & $\beta_{15}$ & 0.094 & 0 & 0.234 & 0 & 0.200 & 0.006 & 0.022 & 0.00 & 0.214 & 0.006 & 0.002 & 0.002 & 0.012 & 0.008 & 0.028 & 0.002 & 0 & 0 & 0.026 & 0.046 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.223 & 0.010 & 0.240 & 0.011 & 0.033 & 0.012 & 0.248 & 0.01 & 0.263 & 0.016 & 0.067 & 0.009 & 0.206 & 0.022 & 0.037 & 0.017 & 0.244 & 0.012 & 0.056 & 0.010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+<!-- ### Sim 72; $n=500, (p,p_0)=(100,10), k=10, \rho = "high", q=1, l=5$ -->
+
+
+# Block 8
+<!-- ### Sim 37c; $n=100, (p,p_0)=(25,5), k=5, \rho = "low", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 37c) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{low}$}
+\begin{tabular}{cc|cccccccccc}
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.086 & 0.118 & 0.858 & 1 & 0.772 & 0.912 & 0.866 & 0.984 & 0.946 & 0.932 \\
+ & $\beta_2$ & 0.112 & 0.118 & 0.658 & 0.996 & 1 & 1 & 0.978 & 1 & 0.050 & 0.156 \\
+ & $\beta_3$ & 0.532 & 0.252 & 0.102 & 0.754 & 0.828 & 0.912 & 0.984 & 1 & 0.110 & 0.086 \\
+ & $\beta_4$ & 0.354 & 0.480 & 0.224 & 0.880 & 0.222 & 0.830 & 0.180 & 0.478 & 0.396 & 0.132 \\
+ & $\beta_5$ & 0.204 & 0.750 & 0.450 & 0.976 & 0.450 & 0.840 & 0.692 & 0.994 & 0.970 & 0.976 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.036 & 0.044 & 0.102 & 0.050 & 0.142 & 0.090 & 0.350 & 0.270 & 0.108 & 0.100 \\
+ & $\beta_7$ & 0.012 & 0.036 & 0.040 & 0.036 & 0.126 & 0.130 & 0.300 & 0.268 & 0.080 & 0.124 \\
+ & $\beta_8$ & 0.052 & 0.058 & 0.090 & 0.056 & 0.192 & 0.094 & 0.268 & 0.238 & 0.076 & 0.096 \\
+ & $\beta_9$ & 0.024 & 0.060 & 0.036 & 0.062 & 0.088 & 0.124 & 0.194 & 0.258 & 0.038 & 0.118 \\
+ & $\beta_{10}$ & 0.034 & 0.240 & 0.064 & 0.308 & 0.102 & 0.422 & 0.288 & 0.728 & 0.110 & 0.412 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.139 & 0.107 & 0.097 & 0.111 & 0.132 & 0.115 & 0.075 & 0.133 & 0.113 & 0.406
+\end{tabular}
+\end{table}
+
+
+\newpage
+
+
+<!-- ### Sim 38c; $n=100, (p,p_0)=(25,5), k=5, \rho = "med", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 38c) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{med}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.086 & 0.116 & 0.858 & 1 & 0.772 & 0.916 & 0.866 & 0.978 & 0.946 & 0.932 \\
+ & $\beta_2$ & 0.138 & 0.134 & 0.668 & 0.996 & 0.998 & 1 & 0.980 & 1 & 0.046 & 0.172 \\
+ & $\beta_3$ & 0.550 & 0.242 & 0.094 & 0.752 & 0.852 & 0.910 & 0.982 & 1 & 0.104 & 0.090 \\
+ & $\beta_4$ & 0.358 & 0.494 & 0.240 & 0.870 & 0.224 & 0.844 & 0.198 & 0.502 & 0.392 & 0.136 \\
+ & $\beta_5$ & 0.190 & 0.770 & 0.460 & 0.974 & 0.454 & 0.836 & 0.660 & 0.994 & 0.968 & 0.968 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.036 & 0.050 & 0.102 & 0.058 & 0.142 & 0.080 & 0.350 & 0.274 & 0.108 & 0.102 \\
+ & $\beta_7$ & 0.016 & 0.026 & 0.054 & 0.046 & 0.116 & 0.114 & 0.328 & 0.218 & 0.080 & 0.110 \\
+ & $\beta_8$ & 0.064 & 0.066 & 0.098 & 0.054 & 0.194 & 0.116 & 0.260 & 0.248 & 0.084 & 0.112 \\
+ & $\beta_9$ & 0.024 & 0.054 & 0.044 & 0.056 & 0.096 & 0.114 & 0.208 & 0.256 & 0.044 & 0.124 \\
+ & $\beta_{10}$ & 0.036 & 0.270 & 0.064 & 0.312 & 0.120 & 0.420 & 0.296 & 0.750 & 0.086 & 0.448 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.139 & 0.108 & 0.103 & 0.112 & 0.137 & 0.116 & 0.079 & 0.135 & 0.118 & 0.414 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+<!-- ### Sim 39c; $n=100, (p,p_0)=(25,5), k=5, \rho = "high", q=1, l=5$ -->
+\begin{table}[!htbp]
+\centering
+\caption{(Sim 39c) $n=100, (p,p_0)=(25,5), k=5, \rho = \text{high}$}
+\begin{tabular}{cc|cccccccccc} 
+\toprule
+ & \multicolumn{1}{c}{} & \multicolumn{10}{c}{Response} \\
+ & \multicolumn{1}{c}{} & \multicolumn{2}{c}{$Y_1$} & \multicolumn{2}{c}{$Y_2$} & \multicolumn{2}{c}{$Y_3$} & \multicolumn{2}{c}{$Y_4$} & \multicolumn{2}{c}{$Y_5$} \\
+ &  & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi & Uni & Multi \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. acc. for \\signal\end{tabular}} & $\beta_1$ & 0.086 & 0.108 & 0.858 & 0.998 & 0.772 & 0.914 & 0.866 & 0.982 & 0.946 & 0.928 \\
+ & $\beta_2$ & 0.128 & 0.138 & 0.662 & 0.994 & 1 & 0.998 & 0.970 & 1 & 0.040 & 0.184 \\
+ & $\beta_3$ & 0.534 & 0.238 & 0.124 & 0.748 & 0.832 & 0.904 & 0.980 & 1 & 0.104 & 0.072 \\
+ & $\beta_4$ & 0.374 & 0.482 & 0.244 & 0.860 & 0.212 & 0.870 & 0.188 & 0.480 & 0.414 & 0.150 \\
+ & $\beta_5$ & 0.196 & 0.780 & 0.468 & 0.972 & 0.454 & 0.878 & 0.682 & 0.988 & 0.968 & 0.978 \\ 
+\hline
+\multirow{5}{*}{\begin{tabular}[c]{@{}c@{}}Sel. freq. for first\\five noise\end{tabular}} & $\beta_6$ & 0.036 & 0.040 & 0.102 & 0.060 & 0.142 & 0.094 & 0.350 & 0.272 & 0.108 & 0.114 \\
+ & $\beta_7$ & 0.024 & 0.042 & 0.034 & 0.040 & 0.096 & 0.108 & 0.290 & 0.238 & 0.036 & 0.102 \\
+ & $\beta_8$ & 0.052 & 0.052 & 0.114 & 0.070 & 0.192 & 0.130 & 0.246 & 0.238 & 0.094 & 0.118 \\
+ & $\beta_9$ & 0.016 & 0.060 & 0.046 & 0.068 & 0.066 & 0.116 & 0.200 & 0.260 & 0.038 & 0.130 \\
+ & $\beta_{10}$ & 0.032 & 0.288 & 0.052 & 0.320 & 0.118 & 0.430 & 0.308 & 0.750 & 0.078 & 0.456 \\ 
+\hline
+\multicolumn{2}{c|}{Avg. sel. freq. for noise} & 0.139 & 0.111 & 0.092 & 0.113 & 0.142 & 0.120 & 0.073 & 0.137 & 0.111 & 0.430 \\
+\bottomrule
+\end{tabular}
+\end{table}
