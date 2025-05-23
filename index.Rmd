@@ -1,0 +1,525 @@
+---
+title: "OMEI Mediation Analysis"
+subtitle: "Estimates, confidence intervals, and $p$-values"
+author: "Eli Sun"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MSGLasso) # for MSGLasso.cv and MSGLasso
+library(tidyverse)
+library(compositions)
+library(corrplot)
+library(matrixcalc)
+path3 <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Model v2 Results/"
+imagePath <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Images/Mediation DAGs/"
+```
+
+```{r ToTableFunction, echo=F, eval = T}
+to_table <- function(mod_boot_summ, mod_num, p){
+  mod_boot_summ <- as.data.frame(mod_boot_summ)
+
+  bca_inter <- paste0("(",round(mod_boot_summ$bca_lowerCL,4),", ",round(mod_boot_summ$bca_upperCL,4),")")
+  piv_inter <- paste0("(",round(mod_boot_summ$piv_lowerCL,4),", ",round(mod_boot_summ$piv_upperCL,4),")")
+  
+  if(mod_num %in% c(1,2)) {
+    mod_boot_outcome <- c(rep("PI", p+2), rep("ICDAS", p+2), rep("DS", p+2), rep("MS", p+2), rep("FS", p+2))
+    } else if(mod_num %in% c(3,4,5)) {
+    mod_boot_outcome <- c(rep("ABO", p+2), rep("BW", p+2))
+    } else{
+    mod_boot_outcome <- c(rep("PI", p+2), rep("ICDAS", p+2), rep("DS", p+2), rep("MS", p+2), rep("FS", p+2), rep("ABO", p+2), rep("BW", p+2))
+    }
+  
+  mod_boot_table_df <- data.frame("Outcome" = mod_boot_outcome,
+                                  "Estimand" = gsub("(_resp[1-9])", "", gsub("(_ide_resp[1-9])", "", rownames(mod_boot_summ))),
+                                  "Orig. Est." = round(mod_boot_summ$OrigEst,4),
+                                   "Mean(boot)" = round(mod_boot_summ$Mean_boot,4),
+                                   "sd(boot)" = round(mod_boot_summ$boot_SE,4),
+                                   "pval" = signif(mod_boot_summ$boot_pval,4),
+                                   "BC_a CI" = bca_inter,
+                                   "PBCI" = piv_inter)
+  mod_boot_table_df_print <- mod_boot_table_df[which(mod_boot_table_df$Orig..Est.!=0),]
+  
+  
+  DT::datatable(mod_boot_table_df_print, rownames = F,
+            colnames = c("Outcome", "Estimand", "Orig. Est.", 
+                         "Mean(boot)", "sd(boot)", "p-value",
+                         "BCa CI", "PBCI"))
+  # clipr::write_clip(knitr::kable(mod_boot_table_df_print, digits = 4, format = "latex", align = "c"))
+}
+```
+
+
+### Methodology and data summary
+The general form of the considered mediation models is seen in Figure 1. The set of mediators consists of some subset of saliva microbiome, plaque microbiome, and oral health outcomes (PI, ICDAS, DS, MS, FS, DT, MT, and FT). The set of outcomes consists of some subset of oral health outcomes (surfaces only) and birth outcomes (Adverse birth outcome and birth weight). 
+
+```{r, echo=FALSE, fig.cap="General mediation model", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"GeneralFormOMEI.png"))
+```
+
+The microbiome data were first grouped at the genus level before being transformed to relative abundance within individual and transformed with the centered log-ratio transformation to better approximate normality. 
+
+Plaque index (PI) and the international caries detection and assessment system (ICDAS) are presented on their original scale as their distributions were roughly symmetric. Each of decayed, missing, and filled surfaces (DS, MS, and FS, respectively), as true count data, were transformed with a square root before standardization so as to render their distributions more continuous and/or approximately normal. For example:
+$$
+\text{MS}'=\frac{\sqrt{\text{MS}_i}-n^{-1}\sum_{i=1}^n \sqrt{\text{MS}_i}}{\text{sd}(\sqrt{\text{MS}})}
+$$
+
+Interpretations, therefore, need to be made in terms of changes in standard deviations of the square root of the considered variable relative to the mean of the variable on the square root scale. Adverse birth outcomes is a binary variable and was thus left as-is albeit in violation of our normality assumption. Birth weight was sufficiently symmetric and was therefore left on its orignial scale.
+
+The set of considered confounders: age, race, Hispanic (Y/N), yeast infection (Y/N), on antiobiotics (Y/N), on antifungal (Y/N), brushing twice daily (Y/N), prenatal inhaler use, prenatal diabetes status, prenatal asthma status, prenatal emotional condition, prenatal hypertension status, prenatal smoking status, employment status, modified education level (middle school/high school, Associates' degree, or Bachelor's degree), marriage status, number of children, cortisol level (log), estradiol level (log), progesterone level (log), testosterone level (log), T3 level (log), T4 level (log), and gestational age at first visit.
+
+Included below are tables corresponding to each of the nine considered models. Each table contains the selected partial indirect effects (PIDEs), total indirect effect (TIDE), and direct effect (DE) of exposure (C. _albicans_} is present). Those in the "Estimand" column that are not explicitly labeled with an effect are assumed to be the partial indirect effect from exposure to the corresponding outcome, through that mediator. Additionally, each table contains the mean and standard deviation of 5000 bootstrap samples for each of the above effects, as well as a bootstrap $p$-value (where the null hypothesis is an effect of 0) and two forms of bootstrap confidence intervals. 
+
+Proceeding each table is a visualization of the (partially) selected directed acyclic graph (DAG). Note that, for several of the considered models, these DAGs do not contain all selected mediators. Rather, due to limitations of interpretability, they include only those mediators that have at least one statistically significant effect. Double arrows from a mediator to an outcome represent mediation paths (i.e. $\text{exposure}\to\text{mediator}\to\text{outcome}$) that are statistically significant at the $\alpha=0.05$ level based on the bootstrap inference without adjusting for multiplicity. After the DAG comes a short summary list containing all the estimated effects for each outcome. The only information contained here that is not also present in the searchable tables are the TEs, which are simply the summation of the TIDE and DE for that given outcome. For side-by-side diagrams of the selected models, please refer to the attached .pptx file.
+
+Example conclusions can be framed as follows:
+
+* Example conclusion for a (significant) PIDE: Bacterium X has a positive/negative (equiv. increasing/decreasing) mediating effect on the amount/number/value of [(sqrt)-outcome] relative to its mean [in terms of SDs]
+
+* Example conclusion for a TIDE: The selected mediation profile has an overall positive/negative (equiv. increasing/decreasing) mediating effect on the amount/number/value of [(sqrt)-outcome] relative to its mean [in terms of SDs]
+
+* Example conclusion for a (significant) DE: Ca being present has a positive/negative (equiv. increasing/decreasing) effect on the amount/number/value of [(sqrt)-outcome] relative to its mean [in terms of SDs]
+
+* Example conclusion for a TE: Ca being present, in combination with the mediation profile, has an overall positive/negative (equiv. increasing/decreasing) effect on the amount/number/value of the [(sqrt)-outcome] relative to its mean [in terms of SDs]
+
+<br>
+<br>
+
+### Model 1: $\text{Ca present}\to\text{Saliva microbiome}\to\text{OH (surfaces)}$
+
+```{r, echo=FALSE, fig.cap="Model 1 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model1_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 1 are as follows:
+
+* PI: TIDE = 0.124229, DE = 0.2897, TE = 0.4140
+
+* ICDAS: TIDE = 0.0099, DE = 0.2630, TE = 0.2729
+
+* DS: TIDE = 0.0117, DE = 0.8351, TE = 0.8467
+
+* MS: TIDE = -0.6689, DE = 0.8351, TE = 0.1662
+
+* FS: TIDE = -0.0356, DE = -0.1985, TE = -0.2341
+
+<br>
+
+```{r, echo = F, cache=T}
+load(paste0(path3,"mod1_boot_summ.Rda")); p <- 61; k=5
+
+mod1_resp1_bootSumm <- mod1_boot_summ[c(1:p,306,311),]
+mod1_resp2_bootSumm <- mod1_boot_summ[c((p+1):(2*p),307,312),]  
+mod1_resp3_bootSumm <- mod1_boot_summ[c((2*p+1):(3*p),308,313),] 
+mod1_resp4_bootSumm <- mod1_boot_summ[c((3*p+1):(4*p),309,314),] 
+mod1_resp5_bootSumm <- mod1_boot_summ[c((4*p+1):(5*p),310,315),] 
+mod1_bootSumm_allRes <- rbind(mod1_resp1_bootSumm,mod1_resp2_bootSumm,
+                              mod1_resp3_bootSumm,mod1_resp4_bootSumm,
+                              mod1_resp5_bootSumm)
+
+
+to_table(mod1_bootSumm_allRes, mod_num = 1, p = 61)
+```
+
+
+<br>
+<br>
+
+### Model 2: $\text{Ca present}\to\text{Plaque microbiome}\to\text{OH (surfaces)}$
+```{r, echo=FALSE, fig.cap="Model 2 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model2_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 2 are as follows:
+
+* PI: TIDE = 0.015, DE = 0.4131, TE = 0.4281
+
+* ICDAS: TIDE = 0.0002, DE = 0.4844, TE = 0.4846
+
+* DS: TIDE = 0.0325, DE = 0.7023, TE = 0.7348
+
+* MS: TIDE = -0.0076, DE = 0.6276, TE = 0.6200
+
+* FS: TIDE = 0.0253, DE = 0.2881, TE = 0.3134
+
+<br>
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod2_boot_summ.Rda")); p <- 66; k <- 5
+
+## PI: TIDE = 0.015, DE = 0.4131, TE = 0.4281
+mod2_resp1_bootSumm <- mod2_boot_summ[c(1:p,(5*p+1),(5*p+1+k)),]           
+
+## ICDAS: TIDE = 0.0002, DE = 0.4844, TE = 0.4846
+mod2_resp2_bootSumm <- mod2_boot_summ[c((p+1):(2*p),(5*p+2),(5*p+2+k)),]  
+
+## DS: TIDE = 0.0325, DE = 0.7023, TE = 0.7348
+mod2_resp3_bootSumm <- mod2_boot_summ[c((2*p+1):(3*p),(5*p+3),(5*p+3+k)),] 
+
+## MS: TIDE = -0.0076, DE = 0.6276, TE = 0.6200
+mod2_resp4_bootSumm <- mod2_boot_summ[c((3*p+1):(4*p),(5*p+4),(5*p+4++k)),] 
+
+## FS: TIDE = 0.0253, DE = 0.2881, TE = 0.3134
+mod2_resp5_bootSumm <- mod2_boot_summ[c((4*p+1):(5*p),(5*p+5),(5*p+5+k)),] 
+
+mod2_bootSumm_allRes <- rbind(mod2_resp1_bootSumm,mod2_resp2_bootSumm,
+                              mod2_resp3_bootSumm,mod2_resp4_bootSumm,
+                              mod2_resp5_bootSumm)
+
+to_table(mod2_bootSumm_allRes, mod_num = 2, p = p)
+```
+
+<br>
+<br>
+
+### Model 3: $\text{Ca present}\to\text{OH (all)}\to\text{Birth outcomes}$
+
+```{r, echo=FALSE, fig.cap="Model 3 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model3_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 3 are as follows:
+
+* ABO: TIDE = 0.0031, DE = 0.0016, TE = 0.0047
+
+* BW: TIDE = 0.0705, DE = -0.0407, TE = 0.0299
+
+<br>
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod3_boot_summ.Rda")); p <- 8; k = 2
+
+## ABO: TIDE = 0.0031, DE = 0.0016, TE = 0.0047
+mod3_resp1_bootSumm <- mod3_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+
+## BW: TIDE = 0.0705, DE = -0.0407, TE = 0.0299
+mod3_resp2_bootSumm <- mod3_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+
+mod3_bootSumm_allRes <- rbind(mod3_resp1_bootSumm,mod3_resp2_bootSumm)
+
+to_table(mod3_bootSumm_allRes, mod_num=3, p=8)
+```
+
+<br>
+<br>
+
+### Model 4: $\text{Ca present}\to(\text{Saliva microbiome, OH (all)})\to\text{Birth outcomes}$
+
+```{r, echo=FALSE, fig.cap="Model 4 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model4_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 4 are as follows:
+
+* ABO: TIDE = -0.003, DE = 0.0200, TE = 0.0197
+
+* BW: TIDE = -0.1357, DE = 0.1392, TE = 0.0035
+
+<br>
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod4_boot_summ.Rda")); p <- 69; k = 2
+
+## ABO: TIDE = -0.003, DE = 0.0200, TE = 0.0197
+mod4_resp1_bootSumm <- mod4_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+
+## BW: TIDE = -0.1357, DE = 0.1392, TE = 0.0035
+mod4_resp2_bootSumm <- mod4_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+
+mod4_bootSumm_allRes <- rbind(mod4_resp1_bootSumm,mod4_resp2_bootSumm)
+
+to_table(mod4_bootSumm_allRes, mod_num = 4, p = 69)
+```
+
+<br>
+<br>
+
+### Model 5: $\text{Ca present}\to(\text{Plaque microbiome, OH (all)})\to\text{Birth outcomes}$
+
+```{r, echo=FALSE, fig.cap="Model 5 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model5_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 5 are as follows:
+
+* ABO: TIDE = 0.0000, DE = 0.0071, TE = 0.0071
+
+* BW: TIDE = -0.0605, DE = -0.2666, TE = -0.3271
+
+<br> 
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod5_boot_summ.Rda")); p <- 74; k = 2
+
+## ABO: TIDE = 0.0000, DE = 0.0071, TE = 0.0071
+mod5_resp1_bootSumm <- mod5_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+
+## BW: TIDE = -0.0605, DE = -0.2666, TE = -0.3271
+mod5_resp2_bootSumm <- mod5_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+
+mod5_bootSumm_allRes <- rbind(mod5_resp1_bootSumm,mod5_resp2_bootSumm)
+
+to_table(mod5_bootSumm_allRes, mod_num = 5, p = 74)
+```
+
+<br>
+<br>
+
+### Model 6: $\text{Ca present}\to\text{Saliva microbiome}\to(\text{OH (surfaces), Birth})$
+```{r, echo=FALSE, fig.cap="Model 6 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model6_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 6 are as follows:
+
+* PI: TIDE = 0.2198 DE = 0.2198, TE = 0.4902
+
+* ICDAS: TIDE = 0.0633, DE = 0.2604, TE = 0.3237
+
+* DS: TIDE = -0.0136, DE = 0.8397, TE = 0.8261
+
+* MS: TIDE = -0.0079, DE = 0.1364, TE = 0.1285
+
+* FS: TIDE = -0.0083, DE = -0.1977, TE = -0.2060
+
+* ABO: TIDE = 0.0003, DE = 0.0273, TE = 0.0276
+
+* BW: TIDE = -0.0771, DE = 0.0799, TE = 0.0028
+
+<br> 
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod6_boot_summ.Rda")); p <- 61; k=7
+
+## PI: TIDE = 0.2198 DE = 0.2198, TE = 0.4902
+mod6_resp1_bootSumm <- mod6_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+
+## ICDAS: TIDE = 0.0633, DE = 0.2604, TE = 0.3237
+mod6_resp2_bootSumm <- mod6_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+
+## DS: TIDE = -0.0136, DE = 0.8397, TE = 0.8261
+mod6_resp3_bootSumm <- mod6_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+
+## MS: TIDE = -0.0079, DE = 0.1364, TE = 0.1285
+mod6_resp4_bootSumm <- mod6_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+
+## FS: TIDE = -0.0083, DE = -0.1977, TE = -0.2060
+mod6_resp5_bootSumm <- mod6_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+
+## ABO: TIDE = 0.0003, DE = 0.0273, TE = 0.0276
+mod6_resp6_bootSumm <- mod6_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+
+## BW: TIDE = -0.0771, DE = 0.0799, TE = 0.0028
+mod6_resp7_bootSumm <- mod6_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+
+
+mod6_bootSumm_allRes <- rbind(mod6_resp1_bootSumm,mod6_resp2_bootSumm,
+                              mod6_resp3_bootSumm,mod6_resp4_bootSumm,
+                              mod6_resp5_bootSumm,mod6_resp6_bootSumm,
+                              mod6_resp7_bootSumm)
+
+
+to_table(mod6_bootSumm_allRes, mod_num = 6, p = 61)
+```
+
+<br>
+<br>
+
+### Model 7: $\text{Ca present}\to\text{Plaque microbiome}\to(\text{OH (surfaces), Birth})$
+```{r, echo=FALSE, fig.cap="Model 7 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model7_signs.png"))
+```
+
+<br>
+
+The effect estimates for each outcome in model 7 are as follows:
+
+* PI: TIDE = 0.0138, DE = 0.4162, TE = 0.4300
+
+* ICDAS: TIDE = 0.0036, DE = 0.4765, TE = 0.4801
+
+* DS: TIDE = 0.0314, DE = 0.7054, TE = 0.7368
+
+* MS: TIDE = -0.0072, DE = 0.6285, TE = 0.6213
+
+* FS: TIDE = 0.0246, DE = 0.2879, TE = 0.3125
+
+* ABO: TIDE = 0.0000, DE = 0.0038, TE = 0.0038
+
+* BW: TIDE = -0.0107, DE = -0.2718, TE = -0.2825 
+
+<br> 
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod7_boot_summ.Rda")); p <- 66; k <- 7
+
+## PI: TIDE = 0.0138, DE = 0.4162, TE = 0.4300
+mod7_resp1_bootSumm <- mod7_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+
+## ICDAS: TIDE = 0.0036, DE = 0.4765, TE = 0.4801
+mod7_resp2_bootSumm <- mod7_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+
+## DS: TIDE = 0.0314, DE = 0.7054, TE = 0.7368
+mod7_resp3_bootSumm <- mod7_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+
+## MS: TIDE = -0.0072, DE = 0.6285, TE = 0.6213
+mod7_resp4_bootSumm <- mod7_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+
+## FS: TIDE = 0.0246, DE = 0.2879, TE = 0.3125
+mod7_resp5_bootSumm <- mod7_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+
+## ABO: TIDE = 0.0000, DE = 0.0038, TE = 0.0038
+mod7_resp6_bootSumm <- mod7_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+
+## BW: TIDE = -0.0107, DE = -0.2718, TE = -0.2825 
+mod7_resp7_bootSumm <- mod7_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+
+mod7_bootSumm_allRes <- rbind(mod7_resp1_bootSumm,mod7_resp2_bootSumm,
+                              mod7_resp3_bootSumm,mod7_resp4_bootSumm,
+                              mod7_resp5_bootSumm,mod7_resp6_bootSumm,
+                              mod7_resp7_bootSumm)
+
+
+to_table(mod7_bootSumm_allRes, mod_num = 7, p = 66)
+```
+
+<br>
+<br>
+
+### Model 8: $\text{Ca present}\to\text{Salive microbiome}\to(\{\text{OH (surfaces)\}, \{Birth}\})$
+
+```{r, echo=FALSE, fig.cap="Model 8 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model8_signs.png"))
+```
+
+<br> 
+
+The effect estimates for each outcome in model 8 are as follows:
+
+* PI: TIDE = 0.1019, DE = 0.3684, TE = 0.4703
+
+* ICDAS: TIDE = 0.0398, DE = 0.3083, TE = 0.3481
+
+* DS: TIDE = 0.0300, DE = 0.8411, TE = 0.8711
+
+* MS: TIDE = 0.0335, DE = 0.1686, TE = 0.2021
+
+* FS: TIDE = -0.0079, DE = -0.1917, TE = -0.1996
+
+* ABO: TIDE = 0.0267, DE = 0.0267, TE = 0.0267
+
+* BW: TIDE = -0.0046, DE = 0.0749, TE = 0.0704
+
+<br> 
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod8_boot_summ.Rda")); p <- 61; k <- 7
+
+## PI: TIDE = 0.1019, DE = 0.3684, TE = 0.4703
+mod8_resp1_bootSumm <- mod8_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+
+## ICDAS: TIDE = 0.0398, DE = 0.3083, TE = 0.3481
+mod8_resp2_bootSumm <- mod8_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+
+## DS: TIDE = 0.0300, DE = 0.8411, TE = 0.8711
+mod8_resp3_bootSumm <- mod8_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+
+## MS: TIDE = 0.0335, DE = 0.1686, TE = 0.2021
+mod8_resp4_bootSumm <- mod8_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+
+## FS: TIDE = -0.0079, DE = -0.1917, TE = -0.1996
+mod8_resp5_bootSumm <- mod8_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+
+## ABO: TIDE = 0.0267, DE = 0.0267, TE = 0.0267
+mod8_resp6_bootSumm <- mod8_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+
+## BW: TIDE = -0.0046, DE = 0.0749, TE = 0.0704
+mod8_resp7_bootSumm <- mod8_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+
+mod8_bootSumm_allRes <- rbind(mod8_resp1_bootSumm,mod8_resp2_bootSumm,
+                              mod8_resp3_bootSumm,mod8_resp4_bootSumm,
+                              mod8_resp5_bootSumm,mod8_resp6_bootSumm,
+                              mod8_resp7_bootSumm)
+
+
+to_table(mod8_bootSumm_allRes, mod_num = 8, p = 61)
+```
+
+<br>
+<br>
+
+### Model 9: $\text{Ca present}\to\text{Plaque microbiome}\to(\{\text{OH (surfaces)\}, \{Birth}\})$
+
+```{r, echo=FALSE, fig.cap="Model 9 DAG", out.width = '65%', fig.align="center"}
+knitr::include_graphics(paste0(imagePath,"model9_signs.png"))
+```
+
+
+<br> 
+
+The effect estimates for each outcome in model 9 are as follows:
+
+* PI: TIDE = 0.040, DE = 0.4461, TE = 0.4501
+
+* ICDAS: TIDE = -0.0080, DE = 0.4289, TE = 0.4209
+
+* DS: TIDE = 0.0005, DE = 0.7016, TE = 0.7021
+
+* MS: TIDE = -0.007, DE = 0.6225, TE = 0.6155
+
+* FS: TIDE = 0.0069, DE = 0.3136, TE = 0.3205
+
+* ABO: TIDE = -0.0001, DE = 0.0039, TE = 0.0038
+
+* BW: TIDE = 0.0134, DE = -0.2720, TE = -0.2586
+
+<br> 
+
+```{r, echo = F, cache = T}
+load(paste0(path3,"mod9_boot_summ.Rda")); p <- 66; k <- 7
+
+## PI: TIDE = 0.040, DE = 0.4461, TE = 0.4501
+mod9_resp1_bootSumm <- mod9_boot_summ[c(1:p,(7*p+1),(7*p+1)+k),]           
+
+## ICDAS: TIDE = -0.0080, DE = 0.4289, TE = 0.4209
+mod9_resp2_bootSumm <- mod9_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+
+## DS: TIDE = 0.0005, DE = 0.7016, TE = 0.7021
+mod9_resp3_bootSumm <- mod9_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+
+## MS: TIDE = -0.007, DE = 0.6225, TE = 0.6155
+mod9_resp4_bootSumm <- mod9_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+
+## FS: TIDE = 0.0069, DE = 0.3136, TE = 0.3205
+mod9_resp5_bootSumm <- mod9_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+
+## ABO: TIDE = -0.0001, DE = 0.0039, TE = 0.0038
+mod9_resp6_bootSumm <- mod9_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+
+## BW: TIDE = 0.0134, DE = -0.2720, TE = -0.2586
+mod9_resp7_bootSumm <- mod9_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+
+
+mod9_bootSumm_allRes <- rbind(mod9_resp1_bootSumm,mod9_resp2_bootSumm,
+                              mod9_resp3_bootSumm,mod9_resp4_bootSumm,
+                              mod9_resp5_bootSumm,mod9_resp6_bootSumm,
+                              mod9_resp7_bootSumm)
+
+
+to_table(mod9_bootSumm_allRes, mod_num = 9, p = 66)
+```
+
