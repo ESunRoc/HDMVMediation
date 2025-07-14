@@ -3,20 +3,19 @@
 gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "high"), quiet = T, b_scale = 1){
   #### Function information: ####
   # Requires: 
-    # n, sample size
-    # p, num. candidate mediators
-    # p0, number of true mediators
-    # l, num. of confounders
-    # q, num. of treatments
-    # k, num. of responses
-    # corr, amount of correlation for response residuals
-    # b_scale, the factor by which to adjust the signal size
+  # n, sample size
+  # p, num. candidate mediators
+  # p0, number of true mediators
+  # l, num. of confounders
+  # q, num. of treatments
+  # k, num. of responses
+  # corr, amount of correlation for response residuals
   # Intermediaries:
-    # W_mat, design matrix for step 1 model
-    # Z_mat, design matrix for step 2 model
+  # W_mat, design matrix for step 1 model
+  # Z_mat, design matrix for step 2 model
   # Returns:
-    # test_data, a list of X, U, M, and Y needed to fit the models
-    # sim_params, a list of the input parameters, drawn parameter matrices, and error matrices
+  # test_data, a list of X, U, M, and Y needed to fit the models
+  # sim_params, a list of the input parameters, drawn parameter matrices, and error matrices
   
   #### Confounders (n x l) ####
   set.seed(seed)
@@ -58,55 +57,63 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   #### Z_mat (n x q+p+l) ####
   Z_mat <- cbind(M, U, X)
   
-  
-  
+  #### beta (p x k), PIDE (mediators --> outcomes) ####
   if(p0 == 5){
     if(quiet == T){
+      # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
+      ## very small effects:
       suppressWarnings({
-        beta <-      b_scale * rbind(rep(c(-8, -9,  4,  6,  4), k/5),        
-                                     rep(c( 7, -8, -7, -4, -4), k/5),
-                                     rep(c( 7, -7, -5,  5,  5), k/5),
-                                     rep(c( 8, -7, -9,  4,  5), k/5),
-                                     rep(c(-6, -8,  5, -4, -5), k/5),
-                                     matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+        beta <- b_scale * rbind(rep(c( 0.7, -1.0,  0.6, -0.6, -0.6), k/5),
+                                rep(c( 0.6, -0.6,  0.9,  0.5, -1.0), k/5),
+                                rep(c(-0.9, -0.7, -0.9, -0.9,  1.0), k/5),
+                                rep(c( 1.0, -0.5, -0.5,  0.8,  0.9), k/5),
+                                rep(c( 0.9, -0.7, -1.0, -0.9, -1.0), k/5),
+                                matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+        ## "small" effects ("large" effects: take b_scale = 2)
+        # beta <- b_scale * rbind(rep(c(-5, -3,  2,  3, 4), k/5),        
+        #                         rep(c(-5,  4, -2, -4, 4), k/5),
+        #                         rep(c(-4,  4, -5,  5, 3), k/5),
+        #                         rep(c(-5,  3, -4,  4, 5), k/5),
+        #                         rep(c(-3, -4,  3, -4, 5), k/5),
+        #                         matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
       })
     } else {
       # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
-      beta <- b_scale * rbind(rep(c(-5, -3,  4,  6, 7), k/5),        
-                              rep(c(-7,  6, -3, -4, 4), k/5),
-                              rep(c(-4,  9, -5,  5, 3), k/5),
-                              rep(c(-5,  8, -9,  4, 5), k/5),
-                              rep(c(-8, -4,  3, -4, 9), k/5),
+      beta <- b_scale * rbind(rep(c(-5, -3,  2,  3, 4), k/5),        
+                              rep(c(-5,  4, -2, -4, 4), k/5),
+                              rep(c(-4,  4, -5,  5, 3), k/5),
+                              rep(c(-5,  3, -4,  4, 5), k/5),
+                              rep(c(-3, -4,  3, -4, 5), k/5),
                               matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
     }
   } else{
     if(quiet == T){
       # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
       suppressWarnings({
-        beta <- b_scale * rbind(rep(c(-6, -4,  5,  7, 7), k/5),        
-                                rep(c(-7,  6, -3, -4, 4), k/5),
-                                rep(c(-4,  8, -5,  5, 3), k/5),
-                                rep(c(-3,  8,  9,  5, 5), k/5),
-                                rep(c(-3,  9, -5,  5, 3), k/5),
-                                rep(c(-6,  8,  4,  7, 5), k/5),
-                                rep(c( 8, -5,  3, -6, 9), k/5),
-                                rep(c( 6,  9,  7, -8, 6), k/5),
-                                rep(c( 5, -7,  5, -2, 5), k/5),
-                                rep(c( 4, -3,  7,  5, 7), k/5),
+        beta <- b_scale * rbind(rep(c(-5, -3,  2,  3, 4), k/5),        
+                                rep(c(-5,  4, -2, -4, 4), k/5),
+                                rep(c(-4,  4, -5,  5, 3), k/5),
+                                rep(c(-5,  3, -4,  4, 5), k/5),
+                                rep(c(-3, -4,  3, -4, 5), k/5),
+                                rep(c(-5,  3,  4,  2, 5), k/5),
+                                rep(c( 3, -5,  3, -5, 4), k/5),
+                                rep(c( 5,  3,  4, -3, 2), k/5),
+                                rep(c( 5, -4,  3, -2, 5), k/5),
+                                rep(c( 4, -3,  4,  5, 4), k/5),
                                 matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
       })
     } else {
       # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
-      beta <- b_scale * rbind(rep(c(-6, -4,  5,  7, 7), k/5),        
-                              rep(c(-7,  6, -3, -4, 4), k/5),
-                              rep(c(-4,  8, -5,  5, 3), k/5),
-                              rep(c(-3,  8,  9,  5, 5), k/5),
-                              rep(c(-3,  9, -5,  5, 3), k/5),
-                              rep(c(-6,  8,  4,  7, 5), k/5),
-                              rep(c( 8, -5,  3, -6, 9), k/5),
-                              rep(c( 6,  9,  7, -8, 6), k/5),
-                              rep(c( 5, -7,  5, -2, 5), k/5),
-                              rep(c( 4, -3,  7,  5, 7), k/5),
+      beta <- b_scale * rbind(rep(c(-5, -3,  2,  3, 4), k/5),        
+                              rep(c(-5,  4, -2, -4, 4), k/5),
+                              rep(c(-4,  4, -5,  5, 3), k/5),
+                              rep(c(-5,  3, -4,  4, 5), k/5),
+                              rep(c(-3, -4,  3, -4, 5), k/5),
+                              rep(c(-5,  3,  4,  2, 5), k/5),
+                              rep(c( 3, -5,  3, -5, 4), k/5),
+                              rep(c( 5,  3,  4, -3, 2), k/5),
+                              rep(c( 5, -4,  3, -2, 5), k/5),
+                              rep(c( 4, -3,  4,  5, 4), k/5),
                               matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
     }
   }
@@ -128,12 +135,23 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   
   Sigma_E2 <- MBESS::cor2cov(cor.mat = CorrMat_E2, sd = rep(1,k))
   set.seed(seed)
+  # E2 <- mvrnorm(n=n, mu = rep(0,k), Sigma = Sigma_E2, empirical = T)
+  # E2 <- mvrnorm(n=n, mu = rep(0,k), Sigma = Sigma_E2, empirical = F)
   E2 <- mvnfast::rmvn(n=n, mu = rep(0,k), sigma = Sigma_E2)
   
   #### Y_mat (n x k), response matrix ####
+  ## Sample from the matrix normal, conditional on Z_mat
+  # Y <- MBSP::matrix_normal(M = Z_mat %*% B_mat, U = diag(n), V = Sigma_E2)
+  
   ## Generate from the model equation
-  Y <- Z_mat %*% B_mat + E2 # correlation induced on residuals
-
+  Y <- Z_mat %*% B_mat + E2
+  # Y <- M%*%beta + U%*%alpha2 + X%*%
+  
+  ## sample directly from the conditional distribution -- this is better but takes several minutes for large n,k
+  # Sigma <- diag(n) %x% cor(E2)
+  # mu <- (diag(n) %x% t(B_mat))%*%vec(t(Z_mat))
+  # Y <- mvrnorm(n = n, mu = mu, Sigma = Sigma, empirical = T)
+  # Y <- Y[,1:k]
   
   colnames(Y) <- paste0("Y", 1:k) 
   
