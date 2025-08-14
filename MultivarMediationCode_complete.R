@@ -1,22 +1,21 @@
 #### Simulation functions ####
 # Generate a single dataset with specified sim parameters
-gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "high"), quiet = T, b_scale = 1){
+gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "high"), b_scale = 1){
   #### Function information: ####
   # Requires: 
-    # n, sample size
-    # p, num. candidate mediators
-    # p0, number of true mediators
-    # l, num. of confounders
-    # q, num. of treatments
-    # k, num. of responses
-    # corr, amount of correlation for response residuals
-    # b_scale, the factor by which to adjust the signal size
+  # n, sample size
+  # p, num. candidate mediators
+  # p0, number of true mediators
+  # l, num. of confounders
+  # q, num. of treatments
+  # k, num. of responses
+  # corr, amount of correlation for response residuals
   # Intermediaries:
-    # W_mat, design matrix for step 1 model
-    # Z_mat, design matrix for step 2 model
+  # W_mat, design matrix for step 1 model
+  # Z_mat, design matrix for step 2 model
   # Returns:
-    # test_data, a list of X, U, M, and Y needed to fit the models
-    # sim_params, a list of the input parameters, drawn parameter matrices, and error matrices
+  # test_data, a list of X, U, M, and Y needed to fit the models
+  # sim_params, a list of the input parameters, drawn parameter matrices, and error matrices
   
   #### Confounders (n x l) ####
   set.seed(seed)
@@ -58,82 +57,172 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   #### Z_mat (n x q+p+l) ####
   Z_mat <- cbind(M, U, X)
   
-  
-  
-  if(p0 == 5){
-    if(quiet == T){
-      suppressWarnings({
-        beta <-      b_scale * rbind(rep(c(-8, -9,  4,  6,  4), k/5),        
-                                     rep(c( 7, -8, -7, -4, -4), k/5),
-                                     rep(c( 7, -7, -5,  5,  5), k/5),
-                                     rep(c( 8, -7, -9,  4,  5), k/5),
-                                     rep(c(-6, -8,  5, -4, -5), k/5),
-                                     matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
-      })
-    } else {
-      # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
-      beta <- b_scale * rbind(rep(c(-5, -3,  4,  6, 7), k/5),        
-                              rep(c(-7,  6, -3, -4, 4), k/5),
-                              rep(c(-4,  9, -5,  5, 3), k/5),
-                              rep(c(-5,  8, -9,  4, 5), k/5),
-                              rep(c(-8, -4,  3, -4, 9), k/5),
-                              matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
-    }
-  } else{
-    if(quiet == T){
-      # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
-      suppressWarnings({
-        beta <- b_scale * rbind(rep(c(-6, -4,  5,  7, 7), k/5),        
-                                rep(c(-7,  6, -3, -4, 4), k/5),
-                                rep(c(-4,  8, -5,  5, 3), k/5),
-                                rep(c(-3,  8,  9,  5, 5), k/5),
-                                rep(c(-3,  9, -5,  5, 3), k/5),
-                                rep(c(-6,  8,  4,  7, 5), k/5),
-                                rep(c( 8, -5,  3, -6, 9), k/5),
-                                rep(c( 6,  9,  7, -8, 6), k/5),
-                                rep(c( 5, -7,  5, -2, 5), k/5),
-                                rep(c( 4, -3,  7,  5, 7), k/5),
-                                matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
-      })
-    } else {
-      # set.seed(3^3) # rbind(beta_1,...,beta_p0, beta_(p0+1),...,beta_p)
-      beta <- b_scale * rbind(rep(c(-6, -4,  5,  7, 7), k/5),        
-                              rep(c(-7,  6, -3, -4, 4), k/5),
-                              rep(c(-4,  8, -5,  5, 3), k/5),
-                              rep(c(-3,  8,  9,  5, 5), k/5),
-                              rep(c(-3,  9, -5,  5, 3), k/5),
-                              rep(c(-6,  8,  4,  7, 5), k/5),
-                              rep(c( 8, -5,  3, -6, 9), k/5),
-                              rep(c( 6,  9,  7, -8, 6), k/5),
-                              rep(c( 5, -7,  5, -2, 5), k/5),
-                              rep(c( 4, -3,  7,  5, 7), k/5),
-                              matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
-    }
-  }
-  
+  #### beta (p x k), PIDE (mediators --> outcomes) ####
+  if(p0 == 5 & k == 5 & corr == "low"){
+    beta <- b_scale * rbind(c( 4,  2,  3, -1,  5),
+                            c( 3, -5,  1,  4, -2),
+                            c( 2,  4,  5,  4, -1),
+                            c( 5,  1,  3, -3,  4),
+                            c(-1, -3, -4,  2,  4),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 5 & k == 5 & corr == "medium"){
+    beta <- b_scale * rbind(c( 4,  2,  3,  1,  5),
+                            c( 3, -5, -1,  4, -2),
+                            c( 2,  4, -5, -3,  1),
+                            c(-5,  1, -2,  5,  4),
+                            c( 1,  3, -4, -2, -5),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 5 & k == 5 & corr == "high"){
+    beta <- b_scale * rbind(c( 4,  4,  3,  4,  5),
+                            c( 3,  5,  5,  4,  3),
+                            c(-2, -4, -5, -3, -1),
+                            c(-5,  4, -2,  5,  4),
+                            c( 1,  3, -4, -3, -5),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 5 & k == 10 & corr == "low"){ # to beat: 0.3547055
+    beta <- b_scale * rbind(c( 3, -2,  4,  1,  5,  2, -3,  1, -4,  2),
+                            c( 1,  5,  1, -3,  2,  4,  2,  5,  3, -1),
+                            c( 2, -4, -5,  2,  1, -3,  5,  3,  2,  4),
+                            c(-5,  3,  2,  4, -1,  5, -4, -2,  1, -5),
+                            c( 4,  1, -3, -5,  3, -1,  1,  4, -5,  3),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 5 & k == 10 & corr == "medium"){
+    beta <- b_scale * rbind(c( 4,  2,  3,  1,  5,  1, -5,  2,  3, 4),
+                            c( 3, -5,  1,  4, -2,  3,  1,  4, -5, 3),
+                            c( 2,  4, -5, -3,  1, -4,  2, -5,  1, 3),
+                            c(-5,  1,  2,  5,  4, -2,  5, -3,  4, 1),
+                            c( 1,  3, -4, -2, -5, -5,  4,  1, -2, 5),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 5 & k == 10 & corr == "high"){
+    beta <- b_scale * rbind(c( 4,  2,  3,  1,  5,  1, -5,  2,  3,  4),
+                            c( 3,  5,  3,  4,  2,  3,  1,  4,  5,  3),
+                            c(-2, -4, -5, -3, -1, -4, -2, -5, -1, -3),
+                            c(-5,  1,  2,  5,  4, -2,  5, -3,  4,  1),
+                            c( 1,  3, -4, -4, -5, -5,  4, -3, -2,  5),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 10 & k == 5 & corr == "low"){
+    beta <- b_scale * rbind(c( 2,  1, -3,  4, -2),
+                            c(-1,  3, -2, -5,  1),
+                            c( 4, -2,  1,  3, -4),
+                            c(-3,  4, -5,  2,  3),
+                            c( 1, -5,  4,  1,  5),
+                            c( 5,  2, -1, -4, -3),
+                            c(-2,  4,  3,  1,  2),
+                            c( 3,  1,  2,  5,  5),
+                            c(-4,  5,  5,  3, -1),
+                            c( 2, -3, -4,  2,  4), 
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 10 & k == 5 & corr == "medium"){
+    beta <- b_scale * rbind(c( 2,  1, -3,  4, -2),
+                            c(-1, -3, -4, -5,  1),
+                            c( 3, -4,  1,  3, -4),
+                            c( 3,  4,  3, -1,  3),
+                            c( 1,  5,  2,  1,  5),
+                            c( 3,  2, -1, -4, -3),
+                            c(-2,  4,  3,  1,  2),
+                            c(-3,  1,  2, -3,  5),
+                            c(-4,  5,  5,  3, -1),
+                            c( 2, -3, -4,  2,  4), 
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 10 & k == 5 & corr == "high"){
+    beta <- b_scale * rbind(c( 2,  1, -3,  4, -2),
+                            c(-1, -3, -2, -5,  1),
+                            c( 4, -2,  1,  3, -4),
+                            c(-3,  4, -5,  2,  3),
+                            c( 1, -5,  4,  1, -5),
+                            c( 5,  2, -1, -4, -3),
+                            c(-2,  4,  3,  1,  2),
+                            c( 3,  1,  2, -5,  5),
+                            c(-4,  5,  5,  3, -1),
+                            c( 2, -3, -4,  2,  4), 
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 10 & k == 10 & corr == "low"){
+    beta <- b_scale * rbind(c( 3, -2, -1,  3, -2,  2, -1,  1, -2, -4),
+                            c(-4, -2,  4,  2,  3, -1,  2,  5,  3,  3),
+                            c(-2, -3, -4,  1,  2,  5, -3,  1, -3, -5),
+                            c( 1, -3, -2,  3,  4, -3, -5, -2,  1,  4),
+                            c( 5,  4, -3, -5, -1,  2, -4,  3,  5, -2),
+                            c(-2,  1,  5,  5, -3,  4,  1, -4, -2,  3),
+                            c( 1, -3,  4,  1,  5, -2,  3,  2, -5,  2),
+                            c( 5,  2, -1, -3,  4,  1, -2,  3,  1,  4),
+                            c( 4, -4,  3, -3,  2, -5,  2, -1,  3,  5),
+                            c( 2,  3, -2, -4,  1,  3, -5,  4, -4,  2),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else if(p0 == 10 & k == 10 & corr == "medium"){
+    beta <- b_scale * rbind(c( 3, -2,  1,  4, -5,  2, -1,  1,  3,  2),
+                            c(-4,  1,  5, -2,  3, -1,  4, -5,  2,  3),
+                            c( 2, -3,  4,  1, -2,  5, -3,  1,  4,  5),
+                            c( 1, -5, -2,  3,  4, -3, -5, -2, -1,  4),
+                            c( 5,  4,  3, -5,  1,  2, -4,  3,  5, -1),
+                            c(-2,  1, -5,  5, -3,  4,  1, -4, -2,  3),
+                            c( 1, -3,  4, -1,  5, -2,  3,  2, -5,  1),
+                            c(-5,  2, -1,  5,  4,  1, -2,  3,  1,  4),
+                            c( 4, -4,  3, -3,  2, -5,  2, -1,  3,  5),
+                            c( 3,  5, -2, -4, -1,  3, -5,  4, -4,  2),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } else{ # if(p0 == 10 & k == 10 & corr == "high")
+    beta <- b_scale * rbind(c( 3, -2,  1,  4, -5,  2, -1,  5, -3,  2),
+                            c(-4,  1,  5, -2,  3, -1,  4, -5,  2, -3),
+                            c( 2,  3, -4,  1, -2,  5, -3,  1,  4, -5),
+                            c(-1, -5,  2,  3,  4, -3,  5, -2, -1,  4),
+                            c( 5,  4, -3, -5,  1,  2, -4,  3,  5, -1),
+                            c(-2,  1, -5,  2, -3,  4,  1, -4, -2,  3),
+                            c( 1, -3,  4, -1,  5, -2,  3,  2, -5,  1),
+                            c(-5,  2, -1,  5, -4,  1, -2,  3,  1, -4),
+                            c( 4, -4,  3, -3,  2, -5,  2, -1,  3,  5),
+                            c(-3,  5, -2, -4, -1,  3, -5,  4, -4, -2),
+                            matrix(rep(0,k*(p-p0)), nrow = p-p0, ncol = k)) %>% as.matrix
+  } 
   rownames(beta) <- paste0("beta_", 1:p)
   
   #### alpha2 (l x k), nuisance param(s) ####
-  set.seed(4^4); alpha2 <- matrix(runif(l*k, -2, 2), nrow = l, ncol = k)
+  
+  # set.seed(4^4); alpha2 <- matrix(runif(l*k, -2, 2), nrow = l, ncol = k) # eta
+  # alpha2 <- matrix(rep(seq(-2, 2, by = 0.2),5, byrow=T)[1:(l*k)], nrow = l, ncol = k)
+  if(k==5){
+    alpha2 <- matrix(c(-0.61, -0.61, -0.03, -0.27, -0.03,
+                       0.35, -0.02,  0.57,  0.11, -0.56,
+                       -0.16,  0.44, -0.54,  0.21, -0.33,
+                       0.64, -0.39, -0.38,  0.02,  0.38,
+                       -0.23,  0.58,  0.37, -0.07,  0.54), byrow = T, nrow = l, ncol = k)
+  } else{
+    alpha2 <- matrix(c( 0.34, -0.45,  0.56, -0.12,  0.78, -0.45,  0.12, -0.78,  0.45, -0.12,
+                        -0.78,  0.12, -0.45,  0.78, -0.12,  0.56, -0.78,  0.12, -0.45,  0.78,
+                        0.12, -0.78,  0.12, -0.45,  0.78, -0.12,  0.56, -0.45,  0.78, -0.12,
+                        -0.45,  0.56, -0.78,  0.12, -0.45,  0.78, -0.12,  0.56, -0.12,  0.45,
+                        0.56, -0.12,  0.45, -0.56,  0.12, -0.34,  0.45, -0.56,  0.12, -0.45), byrow = T, nrow = l, ncol = k)
+  }
+  
   
   #### xi2 (q x k), nuisance param(s) ####
-  set.seed(5^5); xi2 <- matrix(sample(c(-1,1), q*k, replace=T), nrow = q, ncol = k)
+  set.seed(5^5); xi2 <- matrix(sample(c(-1,1), q*k, replace=T), nrow = q, ncol = k) # tau
+  # xi2 <- matrix # set manually
   
+  
+  # Y = M*beta + X*tau + U*eta + error
+  # Y = Z*B + error
+  # cor(Y) = cor(error)
   #### B_mat (p+l+q x k) ####
   B_mat <- rbind(beta, alpha2, xi2)
   
   #### E1 (n x k), Mediator error matrix ####
-  set.seed(5^5)
-  CorrMat_E2 <- gencor::gencor(d = k, method = corr, lim_low = 0.3, lim_medium = 0.7)$Matrix
+  set.seed(5^5); CorrMat_E2 <- gencor::gencor(d = k, method = corr, lim_low = 0.1, lim_medium = 0.7)$Matrix
   
-  Sigma_E2 <- MBESS::cor2cov(cor.mat = CorrMat_E2, sd = rep(1,k))
-  set.seed(seed)
-  E2 <- mvnfast::rmvn(n=n, mu = rep(0,k), sigma = Sigma_E2)
+  # Sigma_E2 <- MBESS::cor2cov(cor.mat = CorrMat_E2, sd = rep(1,k))
+  # Sigma_E2 <- matrix(rep(1,k),ncol=1) %*% matrix(rep(1,k),nrow=1) * CorrMat_E2
+  
+  set.seed(seed); E2 <- mvnfast::rmvn(n=n, mu = rep(0,k), sigma = CorrMat_E2)
   
   #### Y_mat (n x k), response matrix ####
+  ## Sample from the matrix normal, conditional on Z_mat
+  # Y <- MBSP::matrix_normal(M = Z_mat %*% B_mat, U = diag(n), V = CorrMat_E2)
+  
   ## Generate from the model equation
-  Y <- Z_mat %*% B_mat + E2 # correlation induced on residuals
-
+  Y <- Z_mat%*%B_mat + E2
+  # Y <- matrix(nrow = n, ncol = 5)
+  # for(i in 1:n){
+  #   Y[i,]<-MASS::mvrnorm(n=1, mu = t((Z_mat %*% B_mat)[i,]), Sigma = CorrMat_E2, empirical = F)
+  # }
   
   colnames(Y) <- paste0("Y", 1:k) 
   
@@ -144,6 +233,7 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   full_return <- list("data" = test_data, "parameters" = sim_params)
   return(full_return)
 }
+
 
 # Generate the matrices needed to initialize MSGLasso
 set_MSGparams <- function(p, l, q, k){

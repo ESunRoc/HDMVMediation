@@ -52,6 +52,30 @@ to_table <- function(mod_boot_summ, mod_num, p){
 ```
 
 
+The goal of causal mediation is, broadly, to decompose the effect of a treatment on an outcome (total effect, TE) into the direct effect (DE) caused by treatment and the indirect effect of treatment by way of some mediators. That is, if we have $p$ mediators: 
+$$
+\text{TE} = \text{DE} + \text{IDE}_1 +\ldots+ \text{IDE}_p = \text{DE} + \text{TIDE}
+$$
+
+
+Historically, such models have been fairly simple: one treatment, one mediator, one outcome, some set of confounders. There have been a few papers that allow for multiple outcomes: Schaid et al. (2022) and Zhao et al. (2023). However, both of these methods assume that the treatment, mediators, and outcomes are jointly normal. This precludes the use of a binary treatment.
+
+
+The proposed model does not make any joint distributional assumptions and allows for binary treatments.
+
+In most of the below models, the mediators are taken to be the taxa in the respective biome, aggregated to the genus level, and transformed with via CLR.
+
+There are several important limitations to note, which are being addressed in current and future improvements:
+
+* The outcomes are assumed to be normally distributed
+
+* The mediators and outcomes are assumed to be cross-sectional
+
+* The effect estimates are biased due to use of a LASSO penalty in the second step of model fitting
+
+
+
+
 ### Methodology and data summary
 The general form of the considered mediation models is seen in Figure 1. The set of mediators consists of some subset of saliva microbiome, plaque microbiome, and oral health outcomes (PI, ICDAS, DS, MS, FS, DT, MT, and FT). The set of outcomes consists of some subset of oral health outcomes (surfaces only) and birth outcomes (Adverse birth outcome and birth weight). 
 
@@ -72,7 +96,7 @@ The set of considered confounders: age, race, Hispanic (Y/N), yeast infection (Y
 
 Included below are tables corresponding to each of the nine considered models. Each table contains the selected partial indirect effects (PIDEs), total indirect effect (TIDE), and direct effect (DE) of exposure (C. _albicans_ is present). Those in the "Estimand" column that are not explicitly labeled with an effect are assumed to be the partial indirect effect from exposure to the corresponding outcome, through that mediator. Additionally, each table contains the mean and standard deviation of 5000 bootstrap samples for each of the above effects, as well as a bootstrap $p$-value (where the null hypothesis is an effect of 0) and two forms of bootstrap confidence intervals. 
 
-Proceeding each table is a visualization of the (partially) selected directed acyclic graph (DAG). Note that, for several of the considered models, these DAGs do not contain all selected mediators. Rather, due to limitations of interpretability, they include only those mediators that have at least one statistically significant effect. Double arrows from a mediator to an outcome represent mediation paths (i.e. $\text{exposure}\to\text{mediator}\to\text{outcome}$) that are statistically significant at the $\alpha=0.05$ level based on the bootstrap inference without adjusting for multiplicity. After the DAG comes a short summary list containing all the estimated effects for each outcome. The only information contained here that is not also present in the searchable tables are the TEs, which are simply the summation of the TIDE and DE for that given outcome. For side-by-side diagrams of the selected models, please refer to the attached .pptx file.
+Proceeding each table is a visualization of the (partially) selected directed acyclic graph (DAG). Note that, for several of the considered models, these DAGs do not contain all selected mediators. Rather, due to limitations of interpretability, they include only those mediators that have at least one statistically significant effect. Double arrows from a mediator to an outcome represent mediation paths (i.e. $\text{exposure}\to\text{mediator}\to\text{outcome}$) that are statistically significant at the $\alpha=0.05$ level based on the bootstrap inference without adjusting for multiplicity. After the DAG comes a short summary list containing all the estimated effects for each outcome. The only information contained here that is not also present in the searchable tables are the TEs, which are simply the summation of the TIDE and DE for that given outcome. 
 
 Example conclusions can be framed as follows:
 
