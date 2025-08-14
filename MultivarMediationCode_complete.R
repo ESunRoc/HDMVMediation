@@ -208,7 +208,6 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   #### E1 (n x k), Mediator error matrix ####
   set.seed(5^5); CorrMat_E2 <- gencor::gencor(d = k, method = corr, lim_low = 0.1, lim_medium = 0.7)$Matrix
   
-<<<<<<< HEAD
   # Sigma_E2 <- MBESS::cor2cov(cor.mat = CorrMat_E2, sd = rep(1,k))
   # Sigma_E2 <- matrix(rep(1,k),ncol=1) %*% matrix(rep(1,k),nrow=1) * CorrMat_E2
   
@@ -234,6 +233,7 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   full_return <- list("data" = test_data, "parameters" = sim_params)
   return(full_return)
 }
+
 
 
 # Generate the matrices needed to initialize MSGLasso
