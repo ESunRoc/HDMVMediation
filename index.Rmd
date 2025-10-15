@@ -52,26 +52,26 @@ to_table <- function(mod_boot_summ, mod_num, p){
 ```
 
 
-The goal of causal mediation is, broadly, to decompose the effect of a treatment on an outcome (total effect, TE) into the direct effect (DE) caused by treatment and the indirect effect of treatment by way of some mediators. That is, if we have $p$ mediators: 
-$$
-\text{TE} = \text{DE} + \text{IDE}_1 +\ldots+ \text{IDE}_p = \text{DE} + \text{TIDE}
-$$
+<!-- The goal of causal mediation is, broadly, to decompose the effect of a treatment on an outcome (total effect, TE) into the direct effect (DE) caused by treatment and the indirect effect of treatment by way of some mediators. That is, if we have $p$ mediators:  -->
+<!-- $$ -->
+<!-- \text{TE} = \text{DE} + \text{IDE}_1 +\ldots+ \text{IDE}_p = \text{DE} + \text{TIDE} -->
+<!-- $$ -->
 
 
-Historically, such models have been fairly simple: one treatment, one mediator, one outcome, some set of confounders. There have been a few papers that allow for multiple outcomes: Schaid et al. (2022) and Zhao et al. (2023). However, both of these methods assume that the treatment, mediators, and outcomes are jointly normal. This precludes the use of a binary treatment.
+<!-- Historically, such models have been fairly simple: one treatment, one mediator, one outcome, some set of confounders. There have been a few papers that allow for multiple outcomes: Schaid et al. (2022) and Zhao et al. (2023). However, both of these methods assume that the treatment, mediators, and outcomes are jointly normal. This precludes the use of a binary treatment. -->
 
 
-The proposed model does not make any joint distributional assumptions and allows for binary treatments.
+<!-- The proposed model does not make any joint distributional assumptions and allows for binary treatments. -->
 
-In most of the below models, the mediators are taken to be the taxa in the respective biome, aggregated to the genus level, and transformed with via CLR.
+<!-- In most of the below models, the mediators are taken to be the taxa in the respective biome, aggregated to the genus level, and transformed with via CLR. -->
 
-There are several important limitations to note, which are being addressed in current and future improvements:
+<!-- There are several important limitations to note, which are being addressed in current and future improvements: -->
 
-* The outcomes are assumed to be normally distributed
+<!-- * The outcomes are assumed to be normally distributed -->
 
-* The mediators and outcomes are assumed to be cross-sectional
+<!-- * The mediators and outcomes are assumed to be cross-sectional -->
 
-* The effect estimates are biased due to use of a LASSO penalty in the second step of model fitting
+<!-- * The effect estimates are biased due to use of a LASSO penalty in the second step of model fitting -->
 
 
 
@@ -90,7 +90,7 @@ $$
 \text{MS}'=\frac{\sqrt{\text{MS}_i}-n^{-1}\sum_{i=1}^n \sqrt{\text{MS}_i}}{\text{sd}(\sqrt{\text{MS}})}
 $$
 
-Interpretations, therefore, need to be made in terms of changes in standard deviations of the square root of the considered variable relative to the mean of the variable on the square root scale. Adverse birth outcomes is a binary variable and was thus left as-is albeit in violation of our normality assumption. Birth weight was sufficiently symmetric and was therefore left on its orignial scale.
+Interpretations, therefore, need to be made in terms of changes in standard deviations of the square root of the considered variable relative to the mean of the variable on the square root scale. Adverse birth outcomes is a binary variable and was thus left as-is albeit in violation of our normality assumption. Birth weight was sufficiently symmetric and was therefore left on its original scale.
 
 The set of considered confounders: age, race, Hispanic (Y/N), yeast infection (Y/N), on antiobiotics (Y/N), on antifungal (Y/N), brushing twice daily (Y/N), prenatal inhaler use, prenatal diabetes status, prenatal asthma status, prenatal emotional condition, prenatal hypertension status, prenatal smoking status, employment status, modified education level (middle school/high school, Associates' degree, or Bachelor's degree), marriage status, number of children, cortisol level (log), estradiol level (log), progesterone level (log), testosterone level (log), T3 level (log), T4 level (log), and gestational age at first visit.
 
