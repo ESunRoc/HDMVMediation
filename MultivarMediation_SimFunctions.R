@@ -205,21 +205,12 @@ gen_data <- function(n, p, p0, l, q, k, seed = seed, corr = c("low", "medium", "
   #### E1 (n x k), Mediator error matrix ####
   set.seed(5^5); CorrMat_E2 <- gencor::gencor(d = k, method = corr, lim_low = 0.3, lim_medium = 0.7)$Matrix
   
-  # Sigma_E2 <- MBESS::cor2cov(cor.mat = CorrMat_E2, sd = rep(1,k))
-  # Sigma_E2 <- matrix(rep(1,k),ncol=1) %*% matrix(rep(1,k),nrow=1) * CorrMat_E2
-  
   set.seed(seed); E2 <- mvnfast::rmvn(n=n, mu = rep(0,k), sigma = CorrMat_E2)
   
   #### Y_mat (n x k), response matrix ####
-  ## Sample from the matrix normal, conditional on Z_mat
-  # Y <- MBSP::matrix_normal(M = Z_mat %*% B_mat, U = diag(n), V = CorrMat_E2)
-  
   ## Generate from the model equation
   Y <- Z_mat%*%B_mat + E2
-  # Y <- matrix(nrow = n, ncol = 5)
-  # for(i in 1:n){
-  #   Y[i,]<-MASS::mvrnorm(n=1, mu = t((Z_mat %*% B_mat)[i,]), Sigma = CorrMat_E2, empirical = F)
-  # }
+
   
   colnames(Y) <- paste0("Y", 1:k) 
   
@@ -355,7 +346,6 @@ run_sim <- function(sim_sett, nsim, dataGenerator = c("v1","v2"), b_scale = 1, d
   
   Pen_L <- MSG_params$Pen_L; Pen_G <- MSG_params$Pen_G
   
-  # it breaks if I try anything else.
   assign("Pen_L", Pen_L, envir=.GlobalEnv); assign("Pen_G", Pen_G, envir=.GlobalEnv)
   
   start_time <- proc.time()
@@ -381,11 +371,6 @@ run_sim <- function(sim_sett, nsim, dataGenerator = c("v1","v2"), b_scale = 1, d
     
     #### Step 2 multivariate ####
     
-    # lam1.v <- seq(1e-2, 0.15, length=25)
-    # lamG.v <- seq(1e-2, 0.15, length=25)
-    
-    
-    
     if(drop_penn == T){
       lam1.v <- seq(0.0075, 0.075, length=10)
       lamG.v <- seq(0.0075, 0.075, length=10)
@@ -394,7 +379,7 @@ run_sim <- function(sim_sett, nsim, dataGenerator = c("v1","v2"), b_scale = 1, d
       lamG.v <- seq(0.025, 0.15, length=25)
     }
     
-    # this prints (lam1.v,lamg.v) counter for each fold. This is suppressed so printing to console doesn't take forever
+    # this prints (lam1.v,lamg.v) counter for each fold. This is suppressed so printing to console doesn't slow computation
     invisible(capture.output(step2_mod_cv <- MSGLasso.cv(X = cbind(M,U,X), Y = Y,
                                                          grpWTs, Pen_L, Pen_G,
                                                          PQgrps, GRgrps, lam1.v, lamG.v,
@@ -435,11 +420,7 @@ run_sim <- function(sim_sett, nsim, dataGenerator = c("v1","v2"), b_scale = 1, d
     }
     step2_univar_coef <- unname(step2_univar_coef)
     step2_univar[,sim] <- step2_univar_coef
-    
-    # cat(paste0("Done with simulation ", sim, "; ", nsim-sim, 
-    #            " remaining. Time elapsed: ", 
-    #            round(-1*(start_time[3] - proc.time()[3])/60, 3), " minutes\n"))
-    
+
     if(sim %% 5 == 0){
       cat(paste0("Done with simulation ", sim, "; ", nsim-sim, " remaining. Time elapsed: ", 
                  round(-1*(start_time[3] - proc.time()[3])/60, 3), " minutes. Apx. ",
@@ -554,7 +535,7 @@ BootSim <- function(sim_sett, nsim = 500, nB = 5e3, alpha = 0.05, ncores = 8) {
   
   grp_Norm0 <- matrix(1, G, R)
   
-  assign("Pen_L", Pen_L, envir=.GlobalEnv); assign("Pen_G", Pen_G, envir=.GlobalEnv) # yeah. this again. still don't know why
+  assign("Pen_L", Pen_L, envir=.GlobalEnv); assign("Pen_G", Pen_G, envir=.GlobalEnv) 
   
   lam1.v <- seq(1e-5, 0.05, length = 15)
   lamG.v <- seq(1e-5, 0.05, length = 15)
