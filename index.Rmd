@@ -8,13 +8,13 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(MSGLasso) # for MSGLasso.cv and MSGLasso
+# library(MSGLasso) # for MSGLasso.cv and MSGLasso
 library(tidyverse)
-library(compositions)
-library(corrplot)
-library(matrixcalc)
-path3 <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Model v2 Results/"
-imagePath <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Images/Mediation DAGs/"
+# library(compositions)
+# library(corrplot)
+# library(matrixcalc)
+path3 <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Model v4 Results/"
+imagePath <- "/Users/elisunorig/Desktop/All the Things/Grad School/Research/HD Mediation:Outcomes/OMEI Application/Results/Images/Mediation DAGs v4/"
 ```
 
 ```{r ToTableFunction, echo=F, eval = T}
@@ -114,37 +114,36 @@ Example conclusions can be framed as follows:
 ### Model 1: $\text{Ca present}\to\text{Saliva microbiome}\to\text{OH (surfaces)}$
 
 ```{r, echo=FALSE, fig.cap="Model 1 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model1_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model1.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 1 are as follows:
 
-* PI: TIDE = 0.124229, DE = 0.2897, TE = 0.4140
+* PI: TIDE = 17.2439, DE = 0.2897, TE = 17.5336
 
-* ICDAS: TIDE = 0.0099, DE = 0.2630, TE = 0.2729
+* ICDAS: TIDE = 14.2213, DE = 0.2630, TE = 14.4843
 
-* DS: TIDE = 0.0117, DE = 0.8351, TE = 0.8467
+* DS: TIDE = 1.8098, DE = 0.8351, TE = 2.6449
 
-* MS: TIDE = -0.6689, DE = 0.8351, TE = 0.1662
+* MS: TIDE = 11.5801, DE = 0.1740, TE = 11.7541
 
-* FS: TIDE = -0.0356, DE = -0.1985, TE = -0.2341
+* FS: TIDE = 11.7601, DE = -0.1985, TE = 11.5616
 
 <br>
 
 ```{r, echo = F, cache=T}
-load(paste0(path3,"mod1_boot_summ.Rda")); p <- 61; k=5
+load(paste0(path3,"omei_mod1b.Rda")); p <- 61; k=5
 
-mod1_resp1_bootSumm <- mod1_boot_summ[c(1:p,306,311),]
-mod1_resp2_bootSumm <- mod1_boot_summ[c((p+1):(2*p),307,312),]  
-mod1_resp3_bootSumm <- mod1_boot_summ[c((2*p+1):(3*p),308,313),] 
-mod1_resp4_bootSumm <- mod1_boot_summ[c((3*p+1):(4*p),309,314),] 
-mod1_resp5_bootSumm <- mod1_boot_summ[c((4*p+1):(5*p),310,315),] 
+mod1_resp1_bootSumm <- omei_mod1b[c(1:p,306,311),]
+mod1_resp2_bootSumm <- omei_mod1b[c((p+1):(2*p),307,312),]  
+mod1_resp3_bootSumm <- omei_mod1b[c((2*p+1):(3*p),308,313),] 
+mod1_resp4_bootSumm <- omei_mod1b[c((3*p+1):(4*p),309,314),] 
+mod1_resp5_bootSumm <- omei_mod1b[c((4*p+1):(5*p),310,315),] 
 mod1_bootSumm_allRes <- rbind(mod1_resp1_bootSumm,mod1_resp2_bootSumm,
                               mod1_resp3_bootSumm,mod1_resp4_bootSumm,
                               mod1_resp5_bootSumm)
-
 
 to_table(mod1_bootSumm_allRes, mod_num = 1, p = 61)
 ```
@@ -155,42 +154,42 @@ to_table(mod1_bootSumm_allRes, mod_num = 1, p = 61)
 
 ### Model 2: $\text{Ca present}\to\text{Plaque microbiome}\to\text{OH (surfaces)}$
 ```{r, echo=FALSE, fig.cap="Model 2 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model2_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model2.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 2 are as follows:
 
-* PI: TIDE = 0.015, DE = 0.4131, TE = 0.4281
+* PI: TIDE = 4.2059, DE = 0.4133, TE = 4.6192
 
-* ICDAS: TIDE = 0.0002, DE = 0.4844, TE = 0.4846
+* ICDAS: TIDE = -14.9795, DE = 0.4842, TE = -14.4953
 
-* DS: TIDE = 0.0325, DE = 0.7023, TE = 0.7348
+* DS: TIDE = 10.5259, DE = 0.7025, TE = 11.2284
 
-* MS: TIDE = -0.0076, DE = 0.6276, TE = 0.6200
+* MS: TIDE = -17.6112, DE = 0.6277, TE = -16.9835
 
-* FS: TIDE = 0.0253, DE = 0.2881, TE = 0.3134
+* FS: TIDE = -13.7503, DE = 0.2881, TE = -13.4622
 
 <br>
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod2_boot_summ.Rda")); p <- 66; k <- 5
+load(paste0(path3,"omei_mod2b.Rda")); p <- 66; k <- 5
 
 ## PI: TIDE = 0.015, DE = 0.4131, TE = 0.4281
-mod2_resp1_bootSumm <- mod2_boot_summ[c(1:p,(5*p+1),(5*p+1+k)),]           
+mod2_resp1_bootSumm <- omei_mod2b[c(1:p,(5*p+1),(5*p+1+k)),]           
 
 ## ICDAS: TIDE = 0.0002, DE = 0.4844, TE = 0.4846
-mod2_resp2_bootSumm <- mod2_boot_summ[c((p+1):(2*p),(5*p+2),(5*p+2+k)),]  
+mod2_resp2_bootSumm <- omei_mod2b[c((p+1):(2*p),(5*p+2),(5*p+2+k)),]  
 
 ## DS: TIDE = 0.0325, DE = 0.7023, TE = 0.7348
-mod2_resp3_bootSumm <- mod2_boot_summ[c((2*p+1):(3*p),(5*p+3),(5*p+3+k)),] 
+mod2_resp3_bootSumm <- omei_mod2b[c((2*p+1):(3*p),(5*p+3),(5*p+3+k)),] 
 
 ## MS: TIDE = -0.0076, DE = 0.6276, TE = 0.6200
-mod2_resp4_bootSumm <- mod2_boot_summ[c((3*p+1):(4*p),(5*p+4),(5*p+4++k)),] 
+mod2_resp4_bootSumm <- omei_mod2b[c((3*p+1):(4*p),(5*p+4),(5*p+4++k)),] 
 
 ## FS: TIDE = 0.0253, DE = 0.2881, TE = 0.3134
-mod2_resp5_bootSumm <- mod2_boot_summ[c((4*p+1):(5*p),(5*p+5),(5*p+5+k)),] 
+mod2_resp5_bootSumm <- omei_mod2b[c((4*p+1):(5*p),(5*p+5),(5*p+5+k)),] 
 
 mod2_bootSumm_allRes <- rbind(mod2_resp1_bootSumm,mod2_resp2_bootSumm,
                               mod2_resp3_bootSumm,mod2_resp4_bootSumm,
@@ -205,27 +204,27 @@ to_table(mod2_bootSumm_allRes, mod_num = 2, p = p)
 ### Model 3: $\text{Ca present}\to\text{OH (all)}\to\text{Birth outcomes}$
 
 ```{r, echo=FALSE, fig.cap="Model 3 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model3_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model3.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 3 are as follows:
 
-* ABO: TIDE = 0.0031, DE = 0.0016, TE = 0.0047
+* ABO: TIDE = 0.2279, DE = 0.0274, TE = 0.2553
 
-* BW: TIDE = 0.0705, DE = -0.0407, TE = 0.0299
+* BW: TIDE = -1.7878, DE = 0.0209, TE = -1.7669
 
 <br>
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod3_boot_summ.Rda")); p <- 8; k = 2
+load(paste0(path3,"omei_mod3b.Rda")); p <- 8; k = 2
 
 ## ABO: TIDE = 0.0031, DE = 0.0016, TE = 0.0047
-mod3_resp1_bootSumm <- mod3_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+mod3_resp1_bootSumm <- omei_mod3b[c(1:p,(2*p+1),(2*p+1+k)),]           
 
 ## BW: TIDE = 0.0705, DE = -0.0407, TE = 0.0299
-mod3_resp2_bootSumm <- mod3_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+mod3_resp2_bootSumm <- omei_mod3b[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
 
 mod3_bootSumm_allRes <- rbind(mod3_resp1_bootSumm,mod3_resp2_bootSumm)
 
@@ -238,27 +237,27 @@ to_table(mod3_bootSumm_allRes, mod_num=3, p=8)
 ### Model 4: $\text{Ca present}\to(\text{Saliva microbiome, OH (all)})\to\text{Birth outcomes}$
 
 ```{r, echo=FALSE, fig.cap="Model 4 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model4_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model4.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 4 are as follows:
 
-* ABO: TIDE = -0.003, DE = 0.0200, TE = 0.0197
+* ABO: TIDE = 2.4280, DE = 0.0270, TE = 2.4550
 
-* BW: TIDE = -0.1357, DE = 0.1392, TE = 0.0035
+* BW: TIDE = -6.3016, DE = 0.0588, TE = -6.2428
 
 <br>
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod4_boot_summ.Rda")); p <- 69; k = 2
+load(paste0(path3,"omei_mod4b.Rda")); p <- 69; k = 2
 
 ## ABO: TIDE = -0.003, DE = 0.0200, TE = 0.0197
-mod4_resp1_bootSumm <- mod4_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+mod4_resp1_bootSumm <- omei_mod4b[c(1:p,(2*p+1),(2*p+1+k)),]           
 
 ## BW: TIDE = -0.1357, DE = 0.1392, TE = 0.0035
-mod4_resp2_bootSumm <- mod4_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+mod4_resp2_bootSumm <- omei_mod4b[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
 
 mod4_bootSumm_allRes <- rbind(mod4_resp1_bootSumm,mod4_resp2_bootSumm)
 
@@ -271,27 +270,27 @@ to_table(mod4_bootSumm_allRes, mod_num = 4, p = 69)
 ### Model 5: $\text{Ca present}\to(\text{Plaque microbiome, OH (all)})\to\text{Birth outcomes}$
 
 ```{r, echo=FALSE, fig.cap="Model 5 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model5_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model5.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 5 are as follows:
 
-* ABO: TIDE = 0.0000, DE = 0.0071, TE = 0.0071
+* ABO: TIDE = 0.9039, DE = 0.0038, TE = 0.9077
 
-* BW: TIDE = -0.0605, DE = -0.2666, TE = -0.3271
+* BW: TIDE = 4.7391, DE = -0.2509, TE = 4.4882
 
 <br> 
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod5_boot_summ.Rda")); p <- 74; k = 2
+load(paste0(path3,"omei_mod5b.Rda")); p <- 74; k = 2
 
 ## ABO: TIDE = 0.0000, DE = 0.0071, TE = 0.0071
-mod5_resp1_bootSumm <- mod5_boot_summ[c(1:p,(2*p+1),(2*p+1+k)),]           
+mod5_resp1_bootSumm <- omei_mod5b[c(1:p,(2*p+1),(2*p+1+k)),]           
 
 ## BW: TIDE = -0.0605, DE = -0.2666, TE = -0.3271
-mod5_resp2_bootSumm <- mod5_boot_summ[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
+mod5_resp2_bootSumm <- omei_mod5b[c((p+1):(2*p),(2*p+2),(2*p+2+k)),]  
 
 mod5_bootSumm_allRes <- rbind(mod5_resp1_bootSumm,mod5_resp2_bootSumm)
 
@@ -303,52 +302,52 @@ to_table(mod5_bootSumm_allRes, mod_num = 5, p = 74)
 
 ### Model 6: $\text{Ca present}\to\text{Saliva microbiome}\to(\text{OH (surfaces), Birth})$
 ```{r, echo=FALSE, fig.cap="Model 6 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model6_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model6.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 6 are as follows:
 
-* PI: TIDE = 0.2198 DE = 0.2198, TE = 0.4902
+* PI: TIDE = 17.6871, DE = 0.2924, TE = 17.3947 
 
-* ICDAS: TIDE = 0.0633, DE = 0.2604, TE = 0.3237
+* ICDAS: TIDE = 13.3472, DE = 0.2677, TE = 13.0795  
 
-* DS: TIDE = -0.0136, DE = 0.8397, TE = 0.8261
+* DS: TIDE = 1.8822, DE = 0.8374, TE = 1.0448 
 
-* MS: TIDE = -0.0079, DE = 0.1364, TE = 0.1285
+* MS: TIDE = 10.6652, DE = 0.1772, TE = 10.4880  
 
-* FS: TIDE = -0.0083, DE = -0.1977, TE = -0.2060
+* FS: TIDE = 9.3661, DE = -0.1951, TE = 9.5612  
 
-* ABO: TIDE = 0.0003, DE = 0.0273, TE = 0.0276
+* ABO: TIDE = 2.0691, DE = 0.0269, TE = 2.0422 
 
-* BW: TIDE = -0.0771, DE = 0.0799, TE = 0.0028
+* BW: TIDE = -3.8584, DE = 0.0591, TE = -3.9175
 
 <br> 
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod6_boot_summ.Rda")); p <- 61; k=7
+load(paste0(path3,"omei_mod6b.Rda")); p <- 61; k=7
 
 ## PI: TIDE = 0.2198 DE = 0.2198, TE = 0.4902
-mod6_resp1_bootSumm <- mod6_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+mod6_resp1_bootSumm <- omei_mod6b[c(1:p,(7*p+1),(7*p+1+k)),]           
 
 ## ICDAS: TIDE = 0.0633, DE = 0.2604, TE = 0.3237
-mod6_resp2_bootSumm <- mod6_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+mod6_resp2_bootSumm <- omei_mod6b[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
 
 ## DS: TIDE = -0.0136, DE = 0.8397, TE = 0.8261
-mod6_resp3_bootSumm <- mod6_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+mod6_resp3_bootSumm <- omei_mod6b[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
 
 ## MS: TIDE = -0.0079, DE = 0.1364, TE = 0.1285
-mod6_resp4_bootSumm <- mod6_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+mod6_resp4_bootSumm <- omei_mod6b[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
 
 ## FS: TIDE = -0.0083, DE = -0.1977, TE = -0.2060
-mod6_resp5_bootSumm <- mod6_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+mod6_resp5_bootSumm <- omei_mod6b[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
 
 ## ABO: TIDE = 0.0003, DE = 0.0273, TE = 0.0276
-mod6_resp6_bootSumm <- mod6_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+mod6_resp6_bootSumm <- omei_mod6b[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
 
 ## BW: TIDE = -0.0771, DE = 0.0799, TE = 0.0028
-mod6_resp7_bootSumm <- mod6_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+mod6_resp7_bootSumm <- omei_mod6b[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
 
 
 mod6_bootSumm_allRes <- rbind(mod6_resp1_bootSumm,mod6_resp2_bootSumm,
@@ -365,52 +364,52 @@ to_table(mod6_bootSumm_allRes, mod_num = 6, p = 61)
 
 ### Model 7: $\text{Ca present}\to\text{Plaque microbiome}\to(\text{OH (surfaces), Birth})$
 ```{r, echo=FALSE, fig.cap="Model 7 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model7_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model7.jpeg"))
 ```
 
 <br>
 
 The effect estimates for each outcome in model 7 are as follows:
 
-* PI: TIDE = 0.0138, DE = 0.4162, TE = 0.4300
+* PI: TIDE = 4.7773, DE = 0.4133, TE = 4.3640
 
-* ICDAS: TIDE = 0.0036, DE = 0.4765, TE = 0.4801
+* ICDAS: TIDE = -11.2637, DE = 0.4844, TE = -11.7481
 
-* DS: TIDE = 0.0314, DE = 0.7054, TE = 0.7368
+* DS: TIDE = 11.1998, DE = 0.7026, TE = 10.4972
 
-* MS: TIDE = -0.0072, DE = 0.6285, TE = 0.6213
+* MS: TIDE = -14.5112, DE = 0.6277, TE = -15.1389
 
-* FS: TIDE = 0.0246, DE = 0.2879, TE = 0.3125
+* FS: TIDE = -12.2207, DE = 0.2881, TE = -12.5088
 
-* ABO: TIDE = 0.0000, DE = 0.0038, TE = 0.0038
+* ABO: TIDE = 0.2925, DE = 0.0038, TE = 0.2887
 
-* BW: TIDE = -0.0107, DE = -0.2718, TE = -0.2825 
+* BW: TIDE = 11.1600, DE = -0.2710, TE = 11.4310 
 
 <br> 
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod7_boot_summ.Rda")); p <- 66; k <- 7
+load(paste0(path3,"omei_mod7b.Rda")); p <- 66; k <- 7
 
 ## PI: TIDE = 0.0138, DE = 0.4162, TE = 0.4300
-mod7_resp1_bootSumm <- mod7_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+mod7_resp1_bootSumm <- omei_mod7b[c(1:p,(7*p+1),(7*p+1+k)),]           
 
 ## ICDAS: TIDE = 0.0036, DE = 0.4765, TE = 0.4801
-mod7_resp2_bootSumm <- mod7_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+mod7_resp2_bootSumm <- omei_mod7b[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
 
 ## DS: TIDE = 0.0314, DE = 0.7054, TE = 0.7368
-mod7_resp3_bootSumm <- mod7_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+mod7_resp3_bootSumm <- omei_mod7b[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
 
 ## MS: TIDE = -0.0072, DE = 0.6285, TE = 0.6213
-mod7_resp4_bootSumm <- mod7_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+mod7_resp4_bootSumm <- omei_mod7b[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
 
 ## FS: TIDE = 0.0246, DE = 0.2879, TE = 0.3125
-mod7_resp5_bootSumm <- mod7_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+mod7_resp5_bootSumm <- omei_mod7b[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
 
 ## ABO: TIDE = 0.0000, DE = 0.0038, TE = 0.0038
-mod7_resp6_bootSumm <- mod7_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+mod7_resp6_bootSumm <- omei_mod7b[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
 
 ## BW: TIDE = -0.0107, DE = -0.2718, TE = -0.2825 
-mod7_resp7_bootSumm <- mod7_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+mod7_resp7_bootSumm <- omei_mod7b[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
 
 mod7_bootSumm_allRes <- rbind(mod7_resp1_bootSumm,mod7_resp2_bootSumm,
                               mod7_resp3_bootSumm,mod7_resp4_bootSumm,
@@ -427,52 +426,52 @@ to_table(mod7_bootSumm_allRes, mod_num = 7, p = 66)
 ### Model 8: $\text{Ca present}\to\text{Salive microbiome}\to(\{\text{OH (surfaces)\}, \{Birth}\})$
 
 ```{r, echo=FALSE, fig.cap="Model 8 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model8_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model8.jpeg"))
 ```
 
 <br> 
 
 The effect estimates for each outcome in model 8 are as follows:
 
-* PI: TIDE = 0.1019, DE = 0.3684, TE = 0.4703
+* PI: TIDE = 12.2156, DE = 0.3684, TE = 11.8472
 
-* ICDAS: TIDE = 0.0398, DE = 0.3083, TE = 0.3481
+* ICDAS: TIDE = 5.0827, DE = 0.3083, TE = 4.7744
 
-* DS: TIDE = 0.0300, DE = 0.8411, TE = 0.8711
+* DS: TIDE = -2.0868, DE = 0.8411, TE = -2.9279
 
-* MS: TIDE = 0.0335, DE = 0.1686, TE = 0.2021
+* MS: TIDE = 11.2896, DE = 0.1686, TE = 11.1210
 
-* FS: TIDE = -0.0079, DE = -0.1917, TE = -0.1996
+* FS: TIDE = 2.3642, DE = -0.1917, TE = 2.5559
 
-* ABO: TIDE = 0.0267, DE = 0.0267, TE = 0.0267
+* ABO: TIDE = 2.3014, DE = 0.0267, TE = 2.2747
 
-* BW: TIDE = -0.0046, DE = 0.0749, TE = 0.0704
+* BW: TIDE = -4.5914, DE = 0.0749, TE = -4.6663
 
 <br> 
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod8_boot_summ.Rda")); p <- 61; k <- 7
+load(paste0(path3,"omei_mod8b.Rda")); p <- 61; k <- 7
 
 ## PI: TIDE = 0.1019, DE = 0.3684, TE = 0.4703
-mod8_resp1_bootSumm <- mod8_boot_summ[c(1:p,(7*p+1),(7*p+1+k)),]           
+mod8_resp1_bootSumm <- omei_mod8b[c(1:p,(7*p+1),(7*p+1+k)),]           
 
 ## ICDAS: TIDE = 0.0398, DE = 0.3083, TE = 0.3481
-mod8_resp2_bootSumm <- mod8_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+mod8_resp2_bootSumm <- omei_mod8b[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
 
 ## DS: TIDE = 0.0300, DE = 0.8411, TE = 0.8711
-mod8_resp3_bootSumm <- mod8_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+mod8_resp3_bootSumm <- omei_mod8b[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
 
 ## MS: TIDE = 0.0335, DE = 0.1686, TE = 0.2021
-mod8_resp4_bootSumm <- mod8_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+mod8_resp4_bootSumm <- omei_mod8b[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
 
 ## FS: TIDE = -0.0079, DE = -0.1917, TE = -0.1996
-mod8_resp5_bootSumm <- mod8_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+mod8_resp5_bootSumm <- omei_mod8b[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
 
 ## ABO: TIDE = 0.0267, DE = 0.0267, TE = 0.0267
-mod8_resp6_bootSumm <- mod8_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+mod8_resp6_bootSumm <- omei_mod8b[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
 
 ## BW: TIDE = -0.0046, DE = 0.0749, TE = 0.0704
-mod8_resp7_bootSumm <- mod8_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+mod8_resp7_bootSumm <- omei_mod8b[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
 
 mod8_bootSumm_allRes <- rbind(mod8_resp1_bootSumm,mod8_resp2_bootSumm,
                               mod8_resp3_bootSumm,mod8_resp4_bootSumm,
@@ -489,7 +488,7 @@ to_table(mod8_bootSumm_allRes, mod_num = 8, p = 61)
 ### Model 9: $\text{Ca present}\to\text{Plaque microbiome}\to(\{\text{OH (surfaces)\}, \{Birth}\})$
 
 ```{r, echo=FALSE, fig.cap="Model 9 DAG", out.width = '65%', fig.align="center"}
-knitr::include_graphics(paste0(imagePath,"model9_signs.png"))
+knitr::include_graphics(paste0(imagePath,"Model9.jpeg"))
 ```
 
 
@@ -497,45 +496,45 @@ knitr::include_graphics(paste0(imagePath,"model9_signs.png"))
 
 The effect estimates for each outcome in model 9 are as follows:
 
-* PI: TIDE = 0.040, DE = 0.4461, TE = 0.4501
+* PI: TIDE = 11.3404, DE = 0.4461, TE = 10.8943
 
-* ICDAS: TIDE = -0.0080, DE = 0.4289, TE = 0.4209
+* ICDAS: TIDE = -4.3812, DE = 0.4289, TE = -4.8101
 
-* DS: TIDE = 0.0005, DE = 0.7016, TE = 0.7021
+* DS: TIDE = 20.6233, DE = 0.7016, TE = 19.9217
 
-* MS: TIDE = -0.007, DE = 0.6225, TE = 0.6155
+* MS: TIDE = -19.5377, DE = 0.6225, TE = -20.1602
 
-* FS: TIDE = 0.0069, DE = 0.3136, TE = 0.3205
+* FS: TIDE = -9.7981, DE = 0.3136, TE = -10.1117
 
-* ABO: TIDE = -0.0001, DE = 0.0039, TE = 0.0038
+* ABO: TIDE = 0.1886, DE = 0.0039, TE = 0.1847
 
-* BW: TIDE = 0.0134, DE = -0.2720, TE = -0.2586
+* BW: TIDE = 8.9890, DE = -0.2720, TE = 9.2610
 
 <br> 
 
 ```{r, echo = F, cache = T}
-load(paste0(path3,"mod9_boot_summ.Rda")); p <- 66; k <- 7
+load(paste0(path3,"omei_mod9b.Rda")); p <- 66; k <- 7
 
 ## PI: TIDE = 0.040, DE = 0.4461, TE = 0.4501
-mod9_resp1_bootSumm <- mod9_boot_summ[c(1:p,(7*p+1),(7*p+1)+k),]           
+mod9_resp1_bootSumm <- omei_mod9b[c(1:p,(7*p+1),(7*p+1)+k),]           
 
 ## ICDAS: TIDE = -0.0080, DE = 0.4289, TE = 0.4209
-mod9_resp2_bootSumm <- mod9_boot_summ[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
+mod9_resp2_bootSumm <- omei_mod9b[c((p+1):(2*p),(7*p+2),(7*p+2+k)),]  
 
 ## DS: TIDE = 0.0005, DE = 0.7016, TE = 0.7021
-mod9_resp3_bootSumm <- mod9_boot_summ[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
+mod9_resp3_bootSumm <- omei_mod9b[c((2*p+1):(3*p),(7*p+3),(7*p+3+k)),]           
 
 ## MS: TIDE = -0.007, DE = 0.6225, TE = 0.6155
-mod9_resp4_bootSumm <- mod9_boot_summ[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
+mod9_resp4_bootSumm <- omei_mod9b[c((3*p+1):(4*p),(7*p+4),(7*p+4+k)),]  
 
 ## FS: TIDE = 0.0069, DE = 0.3136, TE = 0.3205
-mod9_resp5_bootSumm <- mod9_boot_summ[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
+mod9_resp5_bootSumm <- omei_mod9b[c((4*p+1):(5*p),(7*p+5),(7*p+5+k)),]           
 
 ## ABO: TIDE = -0.0001, DE = 0.0039, TE = 0.0038
-mod9_resp6_bootSumm <- mod9_boot_summ[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
+mod9_resp6_bootSumm <- omei_mod9b[c((5*p+1):(6*p),(7*p+6),(7*p+6+k)),]  
 
 ## BW: TIDE = 0.0134, DE = -0.2720, TE = -0.2586
-mod9_resp7_bootSumm <- mod9_boot_summ[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
+mod9_resp7_bootSumm <- omei_mod9b[c((6*p+1):(7*p),(7*p+7),(7*p+7+k)),]           
 
 
 mod9_bootSumm_allRes <- rbind(mod9_resp1_bootSumm,mod9_resp2_bootSumm,
