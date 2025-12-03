@@ -77,7 +77,7 @@ to_table <- function(mod_boot_summ, mod_num, p){
 
 
 ### Methodology and data summary
-The general form of the considered mediation models is seen in Figure 1. The set of mediators consists of some subset of saliva microbiome, plaque microbiome, and oral health outcomes (PI, ICDAS, DS, MS, FS, DT, MT, and FT). The set of outcomes consists of some subset of oral health outcomes (surfaces only) and birth outcomes (Adverse birth outcome and birth weight). 
+The general form of the considered mediation models is seen in the figure below. The set of mediators consists of some subset of saliva microbiome, plaque microbiome, and oral health outcomes (PI, ICDAS, DS, MS, FS, DT, MT, and FT). The set of outcomes consists of some subset of oral health outcomes (surfaces only) and birth outcomes (Adverse birth outcome and birth weight). Models using the salivary microbiota as mediators are based on $n=154$ observations while those using the plaque microbiota are based on $n=149$ observations.
 
 ```{r, echo=FALSE, fig.cap="General mediation model", out.width = '65%', fig.align="center"}
 knitr::include_graphics(paste0(imagePath,"GeneralFormOMEI.png"))
@@ -92,7 +92,7 @@ $$
 
 Interpretations, therefore, need to be made in terms of changes in standard deviations of the square root of the considered variable relative to the mean of the variable on the square root scale. Adverse birth outcomes is a binary variable and was thus left as-is albeit in violation of our normality assumption. Birth weight was sufficiently symmetric and was therefore left on its original scale.
 
-The set of considered confounders: age, race, Hispanic (Y/N), yeast infection (Y/N), on antiobiotics (Y/N), on antifungal (Y/N), brushing twice daily (Y/N), prenatal inhaler use, prenatal diabetes status, prenatal asthma status, prenatal emotional condition, prenatal hypertension status, prenatal smoking status, employment status, modified education level (middle school/high school, Associates' degree, or Bachelor's degree), marriage status, number of children, cortisol level (log), estradiol level (log), progesterone level (log), testosterone level (log), T3 level (log), T4 level (log), and gestational age at first visit.
+The set of confounders consisted of: age, race, Hispanic (Y/N), yeast infection (Y/N), on antiobiotics (Y/N), on antifungal (Y/N), brushing twice daily (Y/N), prenatal inhaler use, prenatal diabetes status, prenatal asthma status, prenatal emotional condition, prenatal hypertension status, prenatal smoking status, employment status, modified education level (middle school/high school, Associates' degree, or Bachelor's degree), marriage status, number of children, cortisol level (log), estradiol level (log), progesterone level (log), testosterone level (log), T3 level (log), T4 level (log), and gestational age at first visit.
 
 Included below are tables corresponding to each of the nine considered models. Each table contains the selected partial indirect effects (PIDEs), total indirect effect (TIDE), and direct effect (DE) of exposure (C. _albicans_ is present). Those in the "Estimand" column that are not explicitly labeled with an effect are assumed to be the partial indirect effect from exposure to the corresponding outcome, through that mediator. Additionally, each table contains the mean and standard deviation of 5000 bootstrap samples for each of the above effects, as well as a bootstrap $p$-value (where the null hypothesis is an effect of 0) and two forms of bootstrap confidence intervals. 
 
