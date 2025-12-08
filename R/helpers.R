@@ -1,3 +1,61 @@
+#' Vectorization
+#'
+#' `vec()` computes the vectorization of a given matrix; the isomorphism \eqn{\text{vec}:\mathbb R^{m\times n}\to\mathbb R^{mn}}.
+#'
+#' @param Mat A matrix.
+#'
+#' @returns The vectorization of `Mat`.
+#'
+#' @examples
+#' data <- matrix(1:9, nrow = 3, ncol = 3)
+#' vec(data)
+#'
+#' @export
+vec <- function(Mat) return(t(t(as.vector(Mat))))
+
+
+
+#' Sample covariance in serial
+#' 
+#' `theta_calc()` computes the sparse sample covariance matrix, \eqn{\Theta\approx(\boldsymbol{X}^\top\boldsymbol{X})^{-1}}, via nodewise regression.
+#' 
+#' @param X A numeric matrix.
+#' 
+#' @returns The sparse sample covariance matrix estimated via the nodewise regression of van de Geer et al. (2014).
+#' 
+#' @examples
+#' 
+#' @references{
+#' van de Geer, S., Bühlmann, P., Ritov, Y., and Dezeure, R. (2014). On Asymptotically Optimal Confidence Regions 
+#' and Tests for High-Dimensional Models. \emph{The Annals of Statistics}, \bold{72}(3), 1166-1202.
+#' }
+#' 
+#' @references{
+#' Sun, E., Xiao, J., and Wu, T. T. (2025). Causal Mediation Analysis for Multiple 
+#' Outcomes and High-dimensional Mediators: Identification, Inference, and Application.
+#' \emph{Biometrics}. \it{Under Review.}
+#' }
+#' 
+#' @export
+theta_calc <- function(X){
+  n <- nrow(X)
+  p <- ncol(X)
+  
+  X_std <- scale(X)
+  X_std[is.na(X_std)] <- 0
+  
+  Theta <- matrix(0, p, p)
+  tau_sq <- numeric(p)
+  
+  for (j in 1:p) {
+    result <- theta_column(X_std, j, lambda, method)
+    Theta[, j] <- result$theta_col
+    tau_sq[j] <- result$tau_sq
+  }
+  
+  return(Theta)
+}
+
 # Compute column j of Theta \approx solve(t(X) %*% X)
 theta_column <- function(X, j){
   p <- ncol(X); n <- nrow(X)
@@ -5,12 +63,12 @@ theta_column <- function(X, j){
   y_j <- X[, j]
   X_minus_j <- X[, -j, drop = FALSE]
   
-  cv_fit <- glmnet::cv.glmnet(X_minus_j, y_j, intercept = FALSE, 
-                              standardize = FALSE, nfolds = 5)
+  cv_fit <- cv.glmnet(X_minus_j, y_j, intercept = FALSE, 
+                      standardize = FALSE, nfolds = 5)
   lambda_opt <- cv_fit$lambda.min
   
-  lasso_fit <- glmnet::glmnet(X_minus_j, y_j, lambda = lambda_opt, 
-                              intercept = FALSE, standardize = FALSE)
+  lasso_fit <- glmnet(X_minus_j, y_j, lambda = lambda_opt, 
+                      intercept = FALSE, standardize = FALSE)
   gamma_j <- as.numeric(lasso_fit$beta)
   
   residuals <- y_j - X_minus_j %*% gamma_j
@@ -31,35 +89,44 @@ theta_column <- function(X, j){
   return(list(theta_col = theta_col, tau_sq = tau_sq_j))
 }
 
-# Compute, in serial, Theta \approx solve(t(X) %*% X) column-wise
-theta_calc <- function(X) {
-  n <- nrow(X)
-  p <- ncol(X)
-  
-  X_std <- scale(X)
-  X_std[is.na(X_std)] <- 0
-  
-  Theta <- matrix(0, p, p)
-  tau_sq <- numeric(p)
-  
-  for (j in 1:p) {
-    result <- theta_column(X_std, j, lambda, method)
-    Theta[, j] <- result$theta_col
-    tau_sq[j] <- result$tau_sq
-  }
-  
-  return(Theta)
-}
 
-# Compute, in parallel, Theta \approx solve(t(X) %*% X)
-theta_calc_parallel <- function(X, cores = parallel::detectCores(), folds = 5){
+#' Sample covariance in parallel
+#' 
+#' `theta_calc_parallel()` computes the sparse sample covariance matrix, \eqn{\Theta\approx(\boldsymbol{X}^\top\boldsymbol{X})^{-1}}, via nodewise regression. The parallel back-end is implemented via `doParallel` and `foreach`.
+#' 
+#' @param X A numeric matrix.
+#' @param cores An integer between 1 and `parallel::detectCores()` indicating the number of logical cores to use for parallel computation; defaults to one less than the number of cores on the local system.
+#' @param folds An integer between 1 and `nrow(X)` indicating the number of CV folds to use in estimating the nodewise regressions; defaults to 5-fold CV.
+#' 
+#' @returns The sparse sample covariance matrix estimated via the nodewise regression of van de Geer et al. (2014).
+#' 
+#' @examples
+#' data(hdmvmed_test_data)
+#' theta_calc_parallel(X = cbind(mediators, confounders, trt), cores = 4, folds = 5)
+#' 
+#' 
+#' @references{
+#' van de Geer, S., Bühlmann, P., Ritov, Y., and Dezeure, R. (2014). On Asymptotically Optimal Confidence Regions 
+#' and Tests for High-Dimensional Models. \emph{The Annals of Statistics}, \bold{72}(3), 1166-1202.
+#' }
+#' 
+#' @references{
+#' Sun, E., Xiao, J., and Wu, T. T. (2025). Causal Mediation Analysis for Multiple 
+#' Outcomes and High-dimensional Mediators: Identification, Inference, and Application.
+#' \emph{Biometrics}. \it{Under Review.}
+#' }
+#' 
+#' @export
+theta_calc_parallel <- function(X, cores = parallel::detectCores()-1, folds = 5){
+  X_std <- scale(X); X_std[is.na(X_std)] <- 0
+  
   n <- nrow(X)
   res_mat <- matrix(nrow = ncol(X), ncol = ncol(X)+2)
   
-  clust <- makeCluster(cores)
-  registerDoParallel(clust)
+  clust <- parallel::makeCluster(cores)
+  doParallel::registerDoParallel(clust)
   
-  res_mat <- foreach(j = 1:ncol(X), .combine = "rbind", .packages = "glmnet") %dopar% {
+  res_mat <- foreach::foreach(j = 1:ncol(X), .combine = "rbind", .packages = "glmnet") %dopar% {
     lasso_j <- cv.glmnet(x = X[,-j], y = X[,j], nfolds = folds, intercept = F, standardize = F)
     
     # gamma_j <- lasso_j$glmnet.fit$beta[,lasso_j$index[2,]]
@@ -80,8 +147,8 @@ theta_calc_parallel <- function(X, cores = parallel::detectCores(), folds = 5){
   colnames(res_mat) <- c("lambda.1se", "tau2", paste0("gamma", 1:(ncol(res_mat)-2)))
   rownames(res_mat) <- colnames(X)
   
-  tau2_mat <- res_mat[,"tau2"]
-  lambda_mat <- res_mat[,"lambda.1se"]  
+  # tau2_mat <- res_mat[,"tau2"]
+  # lambda_mat <- res_mat[,"lambda.1se"]  
   
   That2_inv <- diag(1/tau2_mat)
   Chat_mat <- res_mat[,-which(colnames(res_mat)%in%c("lambda.1se", "tau2"))]
