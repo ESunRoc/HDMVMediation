@@ -8,7 +8,7 @@
 #' @param outcomes An \eqn{n\times q} numeric matrix of outcomes.
 #' @param quiet_msglasso A boolean indicator determining whether or not the CV progress of the MSGLasso estimation should be suppressed; defaults to `TRUE`.
 #' @param lam1.v A numeric vector of component-wise regularization parameters as in the MSGLasso of Li et al. (2015). By default, this is taken to be `seq(from = 1e-03, to = 0.05, length = 20)`.
-#' @param lam.g A numeric vector of group-wise regularization parameters as in the MSGLasso of Li et al. (2015). By default, this is taken to be `seq(from = 1e-03, to = 0.05, length = 20)`.
+#' @param lamG.v A numeric vector of group-wise regularization parameters as in the MSGLasso of Li et al. (2015). By default, this is taken to be `seq(from = 1e-03, to = 0.05, length = 20)`.
 #' @param alpha A numeric between 0 and 1 denoting the confidence level for inference; defaults to 0.05.
 #' @param nB A numeric determining the number of bootstrap samples taken for inference. By default, 5000 samples will be used.
 #' @param msg_folds A numeric determining the number of CV folds to be used in tuning the MSGLasso regularization parameters. By default, this is taken to be 5.
@@ -31,23 +31,32 @@
 #' @references{
 #' Li, Y., Nan, B., and Zhu, J. (2015). Multivariate Sparse Group Lasso for the 
 #' Multivariate Multiple Linear Regression with an Arbitrary Group Structure. 
-#' \emph{Biometrics}, \bold{71}, 354-363.
+#' \emph{Biometrics}, *71*, 354-363.
 #' }
 #' 
 #' @references{
 #' Sun, E., Xiao, J., and Wu, T. T. (2025). Causal Mediation Analysis for Multiple 
 #' Outcomes and High-dimensional Mediators: Identification, Inference, and Application.
-#' \emph{Biometrics}. \it{Under Review.}
+#' \emph{Biometrics}. _Under Review._
 #' }
 #' 
 #' @examples
+#' ## Load toy data
+#' data(hdmvmed_test_data)
 #' 
+#' ## Assign mediator/confounder/trt/outcome matrices
+#' mediators <- hdmvmed_test_data[,7:106]
+#' confounders <- hdmvmed_test_data[,107:111]
+#' trt <- hdmvmed_test_data[,1]
+#' outcomes <- hdmvmed_test_data[,2:6]
 #' 
-#' 
-#' 
+#' ## Fit the model
+#' model_fit <- bootstrap_model(mediators = mediators, confounders = confounders,
+#'                              trt = trt, outcomes = outcomes, nB = 10)
+#' model_fit
+#'
 #' @export
-
-bootstrap_model <- function(mediators, confounders, trt, outcomes, quiet_msglasso = T,
+bootstrap_model <- function(mediators, confounders, trt, outcomes, quiet_msglasso = TRUE,
                             lam1.v = seq(1e-3, 0.05, length=20), lamG.v = seq(1e-3, 0.05, length=20), 
                             alpha = 0.05, nB = 5e3, msg_folds = 5, seed = 823543, outcome_grps = FALSE,
                             NumOutGrps = NULL, OutGrpStarts = NULL, OutGrpEnds = NULL){

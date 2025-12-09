@@ -1,6 +1,6 @@
 #' Summary table for HDMVMediation models
 #'
-#' `hdmvm_table()` converts the matrix output of the main `bootstrap_model()` function into a searchable/filterable \texttt{html} table using the `DT` package.
+#' `hdmvm_table()` converts the matrix output of the main `bootstrap_model()` function into a searchable/filterable html table using the `DT` package.
 #' 
 #' @param mod_boot_summ A numeric matrix; the output from `bootstrap_model()`
 #' @param p An integer representing the number of candidate mediators

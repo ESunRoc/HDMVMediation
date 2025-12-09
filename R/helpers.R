@@ -14,7 +14,6 @@
 vec <- function(Mat) return(t(t(as.vector(Mat))))
 
 
-
 #' Sample covariance in serial
 #' 
 #' `theta_calc()` computes the sparse sample covariance matrix, \eqn{\Theta\approx(\boldsymbol{X}^\top\boldsymbol{X})^{-1}}, via nodewise regression.
@@ -24,6 +23,16 @@ vec <- function(Mat) return(t(t(as.vector(Mat))))
 #' @returns The sparse sample covariance matrix estimated via the nodewise regression of van de Geer et al. (2014).
 #' 
 #' @examples
+#' ## Load the toy data
+#' data(hdmvmed_test_data)
+#' 
+#' ## Assign mediator/confounder/trt matrices
+#' mediators <- hdmvmed_test_data[,7:106]
+#' confounders <- hdmvmed_test_data[,107:111]
+#' trt <- hdmvmed_test_data[,1]
+#' 
+#' ## Calculate column j=3 of Theta
+#' theta_calc(X = cbind(mediators, confounders, trt))
 #' 
 #' @references{
 #' van de Geer, S., Bühlmann, P., Ritov, Y., and Dezeure, R. (2014). On Asymptotically Optimal Confidence Regions 
@@ -57,6 +66,36 @@ theta_calc <- function(X){
 }
 
 # Compute column j of Theta \approx solve(t(X) %*% X)
+#'
+#' Column-wise sample covariance
+#' 
+#' `theta_column()` computes the j-th nodewise regression for use in `theta_calc()`.
+#' 
+#' @param X A numeric matrix.
+#' @param j An integer between 1 and `ncol(X)` indicating the column on which to regress \eqn{X_{-j}}.
+#' 
+#' @returns A list containing:
+#' * `theta_col`:
+#' * `tau_sq`:
+#'  
+#' @references{
+#' van de Geer, S., Bühlmann, P., Ritov, Y., and Dezeure, R. (2014). On Asymptotically Optimal Confidence Regions 
+#' and Tests for High-Dimensional Models. \emph{The Annals of Statistics}, \bold{72}(3), 1166-1202.
+#' }
+#' 
+#' @examples
+#' ## Load the toy data
+#' data(hdmvmed_test_data)
+#' 
+#' ## Assign mediator/confounder/trt matrices
+#' mediators <- hdmvmed_test_data[,7:106]
+#' confounders <- hdmvmed_test_data[,107:111]
+#' trt <- hdmvmed_test_data[,1]
+#' 
+#' ## Calculate column j=3 of Theta
+#' theta_column(X = cbind(mediators, confounders, trt), j = 3)
+#' 
+#' @export
 theta_column <- function(X, j){
   p <- ncol(X); n <- nrow(X)
   
@@ -101,9 +140,16 @@ theta_column <- function(X, j){
 #' @returns The sparse sample covariance matrix estimated via the nodewise regression of van de Geer et al. (2014).
 #' 
 #' @examples
+#' ## Load the toy data
 #' data(hdmvmed_test_data)
-#' theta_calc_parallel(X = cbind(mediators, confounders, trt), cores = 4, folds = 5)
 #' 
+#' ## Assign mediator/confounder/trt matrices
+#' mediators <- hdmvmed_test_data[,7:106]
+#' confounders <- hdmvmed_test_data[,107:111]
+#' trt <- hdmvmed_test_data[,1]
+#' 
+#' ## Calculate Theta
+#' theta_calc_parallel(X = cbind(mediators, confounders, trt), cores = 4, folds = 5)
 #' 
 #' @references{
 #' van de Geer, S., Bühlmann, P., Ritov, Y., and Dezeure, R. (2014). On Asymptotically Optimal Confidence Regions 
