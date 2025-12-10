@@ -1,1 +1,0 @@
-Included here is the simulation code used in the paper "Mediation Analysis for Multivariate Outcomes and \\High-dimensional Mediators: Identification, Inference, and Application" (forthcoming). Additionally, full results for all 9 models fit in the course of the paper's data example are included in an html doc.
